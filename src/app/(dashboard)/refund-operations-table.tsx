@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { XIcon } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import {
   defaultRefundTableQuery,
   formatCurrency,
@@ -78,11 +79,17 @@ type RefundOperationsTableProps = {
   refunds: RefundOperation[];
 };
 
+const controlClassName =
+  "h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+
+const detailPanelId = "selected-refund-detail";
+
 export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
   const [query, setQuery] = useState<RefundTableQuery>(
     defaultRefundTableQuery,
   );
   const [selectedRefundId, setSelectedRefundId] = useState<string | null>(null);
+  const selectedRefundButtonRef = useRef<HTMLButtonElement | null>(null);
 
   const visibleRefunds = useMemo(
     () => getRefundTableRows(refunds, query),
@@ -125,18 +132,23 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
     setQuery(defaultRefundTableQuery);
   }
 
+  function closeSelectedRefund() {
+    const returnFocusTarget = selectedRefundButtonRef.current;
+
+    setSelectedRefundId(null);
+    returnFocusTarget?.focus();
+  }
+
   return (
-    <div
-      className={`grid gap-4 ${selectedRefund ? "xl:grid-cols-[minmax(0,1fr)_22rem]" : ""}`}
-    >
-      <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      <section aria-label="Refund table controls">
         <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="grid gap-3 md:grid-cols-[minmax(0,1.4fr)_repeat(4,minmax(10rem,1fr))_auto] md:items-end">
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(14rem,1.4fr)_repeat(2,minmax(9rem,1fr))] xl:grid-cols-[minmax(14rem,1.4fr)_repeat(4,minmax(9rem,1fr))_auto] xl:items-end">
+            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-1">
               Search refunds
               <input
-                aria-label="Search refunds"
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                aria-label="Search refunds by refund id, order id, or customer"
+                className={controlClassName}
                 onChange={(event) =>
                   updateQuery({ searchText: event.target.value })
                 }
@@ -149,8 +161,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
               Status
               <select
-                aria-label="Status"
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                aria-label="Status filter"
+                className={controlClassName}
                 onChange={(event) =>
                   updateQuery({
                     status: event.target.value as RefundStatusFilter,
@@ -170,8 +182,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
               Channel
               <select
-                aria-label="Channel"
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                aria-label="Channel filter"
+                className={controlClassName}
                 onChange={(event) =>
                   updateQuery({
                     channel: event.target.value as RefundChannelFilter,
@@ -191,8 +203,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
               Risk
               <select
-                aria-label="Risk"
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                aria-label="Risk filter"
+                className={controlClassName}
                 onChange={(event) =>
                   updateQuery({
                     risk: event.target.value as RefundRiskFilter,
@@ -211,8 +223,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
               Sort
               <select
-                aria-label="Sort"
-                className="h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                aria-label="Sort refund table"
+                className={controlClassName}
                 onChange={(event) =>
                   updateQuery({
                     sort: event.target.value as RefundSortOption,
@@ -229,7 +241,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             </label>
 
             <button
-              className="h-10 rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Reset refund filters and sorting"
+              className="h-10 w-full rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2 lg:col-span-1 xl:w-auto"
               disabled={!hasActiveQuery}
               onClick={resetQuery}
               type="button"
@@ -239,13 +252,22 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
           </div>
 
           <p className="mt-3 text-sm text-slate-500" aria-live="polite">
-            Showing {visibleRefunds.length} of {refunds.length} refund records
+            Showing {visibleRefunds.length} of {refunds.length} refund records.
+            Sorted by {sortLabels[query.sort].toLowerCase()}.
           </p>
         </div>
+      </section>
 
+      <div
+        className={`grid gap-4 ${selectedRefund ? "xl:grid-cols-[minmax(0,1fr)_minmax(20rem,22rem)]" : ""}`}
+      >
         <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+            <table className="min-w-[72rem] divide-y divide-slate-200 text-left text-sm">
+              <caption className="sr-only">
+                Refund operations queue with synthetic refund records, filters,
+                sorting, and detail selection.
+              </caption>
               <thead className="bg-slate-100 text-xs font-semibold uppercase text-slate-600">
                 <tr>
                   <th className="px-4 py-3" scope="col">
@@ -287,7 +309,8 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
                           channel to bring records back into the queue.
                         </p>
                         <button
-                          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                          aria-label="Clear filters and sorting"
+                          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
                           onClick={resetQuery}
                           type="button"
                         >
@@ -307,11 +330,20 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
                         }`}
                         key={refund.id}
                       >
-                        <td className="whitespace-nowrap px-4 py-4">
+                        <th className="whitespace-nowrap px-4 py-4" scope="row">
                           <button
-                            aria-pressed={isSelected}
-                            className="text-left"
+                            aria-controls={
+                              isSelected ? detailPanelId : undefined
+                            }
+                            aria-expanded={isSelected}
+                            aria-label={`View details for refund ${refund.id}, order ${refund.orderId}, ${refund.customerLabel}`}
+                            className="rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                             onClick={() => setSelectedRefundId(refund.id)}
+                            ref={(button) => {
+                              if (isSelected) {
+                                selectedRefundButtonRef.current = button;
+                              }
+                            }}
                             type="button"
                           >
                             <span className="block font-medium text-slate-950 underline-offset-4 hover:underline">
@@ -321,7 +353,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
                               {refund.orderId}
                             </span>
                           </button>
-                        </td>
+                        </th>
                         <td className="whitespace-nowrap px-4 py-4 text-slate-700">
                           {refund.customerLabel}
                         </td>
@@ -368,75 +400,76 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             </table>
           </div>
         </div>
-      </div>
 
-      {selectedRefund ? (
-        <aside
-          aria-label="Selected refund detail"
-          className="relative rounded-md border border-slate-200 bg-white p-5 shadow-sm"
-        >
-          <button
-            aria-label="Close refund detail panel"
-            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            onClick={() => setSelectedRefundId(null)}
-            type="button"
+        {selectedRefund ? (
+          <aside
+            aria-label="Selected refund detail"
+            className="relative rounded-md border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6 xl:self-start"
+            id={detailPanelId}
           >
-            X
-          </button>
-          <div className="flex flex-col gap-5">
-            <div className="pr-8">
-              <p className="text-sm font-medium uppercase text-slate-500">
-                Selected refund
-              </p>
-              <h3 className="mt-2 text-xl font-semibold text-slate-950">
-                {selectedRefund.id}
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                {selectedRefund.orderId} - {selectedRefund.customerLabel}
-              </p>
-            </div>
+            <button
+              aria-label="Close refund detail panel"
+              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              onClick={closeSelectedRefund}
+              type="button"
+            >
+              <XIcon aria-hidden="true" className="size-4" />
+            </button>
+            <div className="flex flex-col gap-5">
+              <div className="pr-8">
+                <p className="text-sm font-medium uppercase text-slate-500">
+                  Selected refund
+                </p>
+                <h3 className="mt-2 text-xl font-semibold text-slate-950">
+                  {selectedRefund.id}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedRefund.orderId} - {selectedRefund.customerLabel}
+                </p>
+              </div>
 
-            <div className="grid gap-3 text-sm">
-              <DetailItem
-                label="Amount"
-                value={formatCurrency(
-                  selectedRefund.amountCents,
-                  selectedRefund.currency,
-                )}
-              />
-              <DetailItem
-                label="Created"
-                value={formatRefundDate(selectedRefund.createdAt)}
-              />
-              <DetailItem label="Channel" value={selectedRefund.channel} />
-              <DetailItem
-                label="Status"
-                value={statusLabels[selectedRefund.status]}
-              />
-              <DetailItem
-                label="Priority"
-                value={`${priorityLabels[selectedRefund.priority]} - ${selectedRefund.slaLabel}`}
-              />
-            </div>
+              <div className="grid gap-3 text-sm">
+                <DetailItem
+                  label="Amount"
+                  value={formatCurrency(
+                    selectedRefund.amountCents,
+                    selectedRefund.currency,
+                  )}
+                />
+                <DetailItem
+                  label="Created"
+                  value={formatRefundDate(selectedRefund.createdAt)}
+                />
+                <DetailItem label="Channel" value={selectedRefund.channel} />
+                <DetailItem
+                  label="Status"
+                  value={statusLabels[selectedRefund.status]}
+                />
+                <DetailItem
+                  label="Priority"
+                  value={`${priorityLabels[selectedRefund.priority]} - ${selectedRefund.slaLabel}`}
+                />
+              </div>
 
-            <div>
-              <h4 className="text-sm font-semibold text-slate-950">Reason</h4>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {selectedRefund.reason}
-              </p>
-            </div>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-950">Reason</h4>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {selectedRefund.reason}
+                </p>
+              </div>
 
-            <div>
-              <h4 className="text-sm font-semibold text-slate-950">
-                Operations note
-              </h4>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {selectedRefund.riskSummary}
-              </p>
+              <div>
+                <h4 className="text-sm font-semibold text-slate-950">
+                  Operations note
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {selectedRefund.riskSummary}
+                </p>
+              </div>
             </div>
-          </div>
-        </aside>
-      ) : null}
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 }

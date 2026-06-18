@@ -62,10 +62,10 @@ describe("Home", () => {
     expect(screen.queryByText(/returning customer a/i)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: /reset/i }));
-    fireEvent.change(screen.getByLabelText(/^status$/i), {
+    fireEvent.change(screen.getByLabelText(/status filter/i), {
       target: { value: "pending_review" },
     });
-    fireEvent.change(screen.getByLabelText(/^channel$/i), {
+    fireEvent.change(screen.getByLabelText(/channel filter/i), {
       target: { value: "Stripe test" },
     });
 
@@ -78,7 +78,7 @@ describe("Home", () => {
   it("filters urgent and high-risk refunds with the risk filter", () => {
     render(<Home />);
 
-    const riskFilter = screen.getByLabelText(/^risk$/i);
+    const riskFilter = screen.getByLabelText(/risk filter/i);
 
     expect(screen.getByRole("option", { name: /^all$/i })).toBeTruthy();
     expect(
@@ -107,7 +107,7 @@ describe("Home", () => {
   it("sorts visible refund rows by amount", () => {
     render(<Home />);
 
-    fireEvent.change(screen.getByLabelText(/^sort$/i), {
+    fireEvent.change(screen.getByLabelText(/sort refund table/i), {
       target: { value: "amount-desc" },
     });
 
@@ -158,7 +158,7 @@ describe("Home", () => {
       screen.getAllByText(/large partial refund needs finance review/i).length,
     ).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getByLabelText(/^sort$/i), {
+    fireEvent.change(screen.getByLabelText(/sort refund table/i), {
       target: { value: "created-asc" },
     });
 
@@ -205,8 +205,6 @@ describe("Home", () => {
       name: /close refund detail panel/i,
     });
 
-    expect(closeButton.textContent).toBe("X");
-
     fireEvent.click(closeButton);
 
     expect(
@@ -215,10 +213,10 @@ describe("Home", () => {
       }),
     ).toBeNull();
 
-    fireEvent.change(screen.getByLabelText(/^sort$/i), {
+    fireEvent.change(screen.getByLabelText(/sort refund table/i), {
       target: { value: "amount-desc" },
     });
-    fireEvent.change(screen.getByLabelText(/^risk$/i), {
+    fireEvent.change(screen.getByLabelText(/risk filter/i), {
       target: { value: "urgent-high-risk" },
     });
     fireEvent.click(screen.getByRole("button", { name: /reset/i }));
@@ -261,5 +259,41 @@ describe("Home", () => {
         name: /rfnd_demo_1003/i,
       }),
     ).toBeNull();
+  });
+
+  it("exposes refund row actions with detail state and returns focus after closing", () => {
+    render(<Home />);
+
+    const refundButton = screen.getByRole("button", {
+      name: /view details for refund rfnd_demo_1001, order ord-1048, returning customer a/i,
+    });
+
+    expect(refundButton.getAttribute("aria-expanded")).toBe("false");
+    expect(refundButton.getAttribute("aria-controls")).toBeNull();
+
+    fireEvent.click(refundButton);
+
+    expect(refundButton.getAttribute("aria-expanded")).toBe("true");
+    expect(refundButton.getAttribute("aria-controls")).toBe(
+      "selected-refund-detail",
+    );
+    expect(
+      screen.getByRole("complementary", {
+        name: /selected refund detail/i,
+      }).getAttribute("id"),
+    ).toBe("selected-refund-detail");
+
+    const closeButton = screen.getByRole("button", {
+      name: /close refund detail panel/i,
+    });
+
+    fireEvent.click(closeButton);
+
+    expect(
+      screen.queryByRole("complementary", {
+        name: /selected refund detail/i,
+      }),
+    ).toBeNull();
+    expect(document.activeElement).toBe(refundButton);
   });
 });

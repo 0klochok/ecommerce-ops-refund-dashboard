@@ -3,12 +3,136 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 2.1 - refund dashboard follow-up repair
-- Overall status: Phase 2.1 repair completed; automated quality gate passed; browser QA passed through local dev server and Chromium interaction check
-- Quality gate status: green after Phase 2.1 repair validation
+- Phase: Phase 2.2 repair - stable refund filter layout
+- Overall status: Phase 2.2 repair completed; automated quality gate passed; rendered QA passed through Playwright fallback after Browser plugin sandbox failure
+- Quality gate status: green after Phase 2.2 repair validation
 - Current branch: `main`
-- Git status: Phase 2.1 changes are unstaged; Codex has not staged, committed, or pushed
+- Git status: Phase 2.2 repair changes are unstaged; Codex has not staged, committed, or pushed
 - Main blocker: none
+
+## Phase 2.2 Repair - Stable Refund Filter Layout - 2026-06-18
+
+### Summary
+
+- Fixed the manual QA regression where opening the selected refund detail panel could collapse or squeeze the filter/search/control section.
+- Kept the filter controls in a full-width accessible `Refund table controls` region above the conditional table/detail grid.
+- Limited the selected-detail side-by-side layout to the table/detail area, so selecting a refund no longer changes the filter card width.
+- Added Playwright regression coverage that measures the controls region before and after row click, close, and keyboard activation, while confirming filter controls remain visible and enabled.
+- Preserved Phase 2.1 and Phase 2.2 behavior for hidden initial detail panel, row click, keyboard activation, close focus return, filtering, sorting, reset/clear, empty state, and 900px usability.
+- Kept the repair client-side only with deterministic mock data only.
+
+### Files Changed
+
+- `src/app/(dashboard)/refund-operations-table.tsx`: moved the filter/control card outside the selected-detail grid and added the stable accessible controls region.
+- `e2e/home.spec.ts`: added real-browser layout regression checks for filter-control stability after detail panel interactions.
+- `docs/STATE.md`: added this repair record, validation results, manual QA notes, generated artifact status, and scope notes.
+- Existing dirty file preserved: `tests/unit/page.test.tsx` remains modified from the prior Phase 2.2 work; this focused repair did not change it.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files, 17 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; rerun after e2e restored the tracked generated route type reference |
+| E2E | `pnpm e2e` | pass | 1 Playwright Chromium test passed, including the controls-region layout stability regression |
+| Browser validation path | in-app Browser bootstrap | blocked | Failed with Windows sandbox `CreateProcessAsUserW failed: 5`; used project Playwright workflow as fallback |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors; Git reported existing LF-to-CRLF working-copy warnings |
+
+### Manual QA Notes
+
+- Status: pass via Playwright-rendered QA fallback.
+- Flow under test: `/` -> refund row/detail interaction -> filter/search/control section remains stable and usable.
+- Confirmed page load, dashboard heading, KPI cards, no framework runtime/build overlay text, refund table rendering, and controls region visibility.
+- Confirmed urgent/high-risk KPI count is `3` and the Risk filter shows 3 matching rows.
+- Confirmed detail panel is hidden on initial load.
+- Confirmed row click opens the detail panel and the controls region keeps the same document-relative position, width, and height.
+- Confirmed X closes the detail panel, returns focus to the selected row action, and leaves the controls region stable.
+- Confirmed keyboard activation with Enter opens the detail panel and leaves the controls region stable.
+- Confirmed selecting a different row updates the detail panel.
+- Confirmed search, status, channel, and risk filters work while detail interactions are covered.
+- Confirmed amount sorting and date sorting work both directions.
+- Confirmed sorting, filtering, and reset do not auto-reopen a closed panel.
+- Confirmed empty state appears when no rows match and clear filters restores rows without opening the detail panel.
+- Confirmed 900px viewport remains usable without page-level horizontal overflow; the table scroll remains contained in its table region.
+
+### Generated Artifacts And Git
+
+- `git status --short -- .next node_modules coverage test-results playwright-report .scratch`: no output after validation; no generated artifact folders are staged or untracked through this check.
+- `next-env.d.ts` was temporarily changed by the Next dev server during e2e, then restored by rerunning `pnpm build`; it is not present in final `git status --short`.
+- Final `git status --short`: `docs/STATE.md`, `e2e/home.spec.ts`, `src/app/(dashboard)/refund-operations-table.tsx`, and `tests/unit/page.test.tsx` are modified.
+- No backend, database, API route, auth, external service, paid API, dependency, GitHub Actions, commit, push, tag, remote, generated versioned artifact, or Phase 2.3 work was added.
+- Codex did not run `git add`, `git commit`, or `git push`.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- No unit layout assertion was added because jsdom cannot verify rendered layout collapse; the regression is covered in Playwright.
+- Broader mobile redesign, backend persistence, API routes, auth, CSV flows, Stripe test webhooks, and GitHub Actions remain deferred to later approved phases.
+
+## Phase 2.2 - Dashboard UX, Accessibility, And Portfolio Polish Hardening - 2026-06-18
+
+### Summary
+
+- Improved refund table controls with more explicit accessible names for search, status, channel, risk, sort, reset, and empty-state clear actions.
+- Improved refund row action semantics with descriptive accessible names, `aria-expanded`, `aria-controls`, row-header cells, and a screen-reader table caption.
+- Replaced the literal close text with a labeled X icon button and returned focus to the selected refund row action after closing the detail panel.
+- Tightened responsive behavior by letting filter controls wrap at narrower desktop widths, preserving a horizontally scrollable data table, and keeping the selected detail panel sticky only on wide layouts.
+- Preserved Phase 2.1 behavior: no initial detail panel, row action opens/updates details, close clears selection, table controls do not reopen a closed panel, and the urgent/high-risk KPI and Risk filter still share the same predicate.
+- Kept the phase entirely client-side with deterministic mock data only.
+
+### Files Changed
+
+- `src/app/(dashboard)/refund-operations-table.tsx`: accessibility labels/states, focus return, X icon close button, table caption/row headers, responsive control/table/detail layout.
+- `tests/unit/page.test.tsx`: component coverage for row action accessible state, detail panel id wiring, and focus return after close; updated label queries for explicit control names.
+- `e2e/home.spec.ts`: browser coverage for no runtime overlay text, urgent/high-risk KPI/filter consistency, amount/date sorting both directions, keyboard row activation, close focus return, no auto-reopen behavior, empty state, and 900px viewport overflow guard.
+- `docs/STATE.md`: Phase 2.2 record, validation, QA, generated artifact, and scope notes.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files, 17 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` prerendered as static content |
+| E2E | `pnpm e2e` | pass | 1 Playwright Chromium test passed |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors; Git reported existing LF-to-CRLF working-copy warnings |
+
+### Manual QA Checklist
+
+- Status: pass via Playwright-rendered QA fallback.
+- Browser plugin note: the in-app Browser bootstrap failed with `CreateProcessAsUserW failed: 5`, so rendered QA used the repository Playwright workflow against `http://localhost:3000`.
+- Confirmed page load, dashboard heading, KPI cards, no framework runtime/build overlay text, refund table rendering, and desktop layout usability.
+- Confirmed urgent/high-risk KPI count is `3` and the Risk filter shows 3 matching rows.
+- Confirmed detail panel is hidden on initial load.
+- Confirmed selecting a refund row action opens the detail panel.
+- Confirmed keyboard activation with Enter opens the detail panel.
+- Confirmed selecting a different refund row action updates the detail panel.
+- Confirmed the top-right labeled X icon button closes the detail panel.
+- Confirmed closing clears selection and returns focus to the previously selected refund row action.
+- Confirmed sorting, filtering, and reset do not auto-reopen a closed panel.
+- Confirmed search filters expected refund id, order id, and customer fields.
+- Confirmed status, channel, and risk filters work.
+- Confirmed amount sorting works ascending and descending.
+- Confirmed date sorting works ascending and descending.
+- Confirmed empty state appears when no rows match and clear filters restores rows without opening the detail panel.
+- Confirmed 900px viewport remains usable without page-level horizontal overflow; the table scroll remains contained in its table region.
+
+### Generated Artifacts And Git
+
+- `git status --short -- .next node_modules coverage test-results playwright-report .scratch`: no output; no generated artifact folders are staged or untracked through this check.
+- `git status --short`: `e2e/home.spec.ts`, `src/app/(dashboard)/refund-operations-table.tsx`, `tests/unit/page.test.tsx`, and `docs/STATE.md` are modified.
+- No backend, database, API route, auth, external service, paid API, dependency, GitHub Actions, commit, push, tag, remote, generated versioned artifact, or Phase 3 work was added.
+- Codex did not run `git add`, `git commit`, or `git push`.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- No new shadcn/ui components were added because the phase only needed small markup and behavior hardening.
+- No screenshots or reports were written into the repository.
+- Broader mobile-specific redesign, charts, pagination, backend persistence, API routes, auth, CSV flows, Stripe test webhooks, and GitHub Actions remain deferred to later approved phases.
 
 ## Phase 2.1 Repair - Urgent/High-Risk Filter And Detail Close Control - 2026-06-18
 
