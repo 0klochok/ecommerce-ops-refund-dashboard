@@ -37,10 +37,16 @@ Future runtime surfaces:
 
 | Path | Purpose |
 |---|---|
-| `src/app` | Minimal Next.js App Router scaffold |
+| `src/app` | Next.js App Router root layout and global styles |
+| `src/app/(dashboard)` | Minimal Phase 0 dashboard route scaffold |
+| `src/app/api` | Future Route Handler boundary |
+| `src/components/ui` | Future shadcn/ui components |
 | `src/lib/utils.ts` | shadcn utility helper |
-| `tests/e2e` | Playwright browser smoke tests |
+| `tests/unit` | Vitest unit/smoke tests |
+| `tests/integration` | Future integration tests |
+| `e2e` | Playwright browser smoke tests |
 | `prisma/schema.prisma` | Prisma PostgreSQL schema shell; no business models yet |
+| `prisma/migrations` | Future Prisma migrations |
 | `prisma.config.ts` | Prisma 7 config loading `DATABASE_URL` |
 | `docker-compose.yml` | Local PostgreSQL service with safe local credentials |
 | `.env.example` | Safe local placeholders only |

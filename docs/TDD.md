@@ -10,8 +10,8 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 | Layer | Location | Purpose |
 |---|---|---|
-| Unit/smoke | `src/app/page.test.tsx` | Verifies the scaffold home page renders Phase 0 copy |
-| E2E smoke | `tests/e2e/home.spec.ts` | Starts the Next dev server and checks the scaffold page in Chromium |
+| Unit/smoke | `tests/unit/page.test.tsx` | Verifies the scaffold home page renders Phase 0 copy |
+| E2E smoke | `e2e/home.spec.ts` | Starts the Next dev server and checks the scaffold page in Chromium |
 
 ## Required Gates
 
@@ -40,4 +40,4 @@ Later phases should add focused tests for:
 
 ## Skipped Gate Policy
 
-Any skipped applicable gate must be recorded in `STATE.md` with the command, reason, risk, and next action.
+Any skipped applicable gate must be recorded in `docs/STATE.md` with the command, reason, risk, and next action.

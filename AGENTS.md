@@ -46,7 +46,7 @@ This file applies to the whole repository unless a deeper `AGENTS.md` overrides 
 Before non-trivial work:
 
 - Inspect the current repository structure with available tools such as `rg --files`, `tree`, or directory listings.
-- Read `README.md` and relevant docs if present: `REQ.md`, `CONTEXT.md`, `DESIGN.md`, `STATE.md`, `TDD.md`, `RUNBOOK.md`, and relevant files under `docs/`.
+- Read `README.md` and relevant docs if present: `docs/REQ.md`, `docs/CONTEXT.md`, `docs/DESIGN.md`, `docs/STATE.md`, `docs/TDD.md`, `docs/RUNBOOK.md`, and relevant files under `docs/`.
 - Trust current code, scripts, tests, schemas, lockfiles, configuration, and runtime output over stale documentation.
 - Use the repository's existing package manager, lockfile, scripts, test runner, formatter, linter, build tools, and generators.
 - Do not manually edit generated files unless the repository explicitly requires it.
@@ -176,12 +176,12 @@ A phase is not done until relevant tests, lint, type checks, build/smoke checks,
 - Avoid doc churn for trivial refactors.
 - If present and relevant, update:
   - `README.md` for setup, usage, and commands;
-  - `REQ.md` for requirements, scope, and acceptance criteria;
-  - `DESIGN.md` for architecture, data model, and decisions;
-  - `CONTEXT.md` for current technical context and repository map;
-  - `TDD.md` for test strategy and quality gates;
-  - `RUNBOOK.md` for daily workflow and operations;
-  - `STATE.md` after each non-trivial phase;
+  - `docs/REQ.md` for requirements, scope, and acceptance criteria;
+  - `docs/DESIGN.md` for architecture, data model, and decisions;
+  - `docs/CONTEXT.md` for current technical context and repository map;
+  - `docs/TDD.md` for test strategy and quality gates;
+  - `docs/RUNBOOK.md` for daily workflow and operations;
+  - `docs/STATE.md` after each non-trivial phase;
   - `AGENTS.md` when agent rules change.
 
 ## 15. UI and frontend rules

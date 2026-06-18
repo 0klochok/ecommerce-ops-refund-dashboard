@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= "0";
 
 export default defineConfig({
-  testDir: "./tests/e2e",
+  testDir: "./e2e",
   fullyParallel: true,
   reporter: "html",
   use: {
