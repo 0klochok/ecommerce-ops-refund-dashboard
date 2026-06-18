@@ -36,6 +36,23 @@ export type RefundMetrics = {
   averageRefundAmountCents: number;
 };
 
+export type RefundStatusFilter = RefundStatus | "all";
+export type RefundChannelFilter = RefundChannel | "all";
+export type RefundRiskFilter = "all" | "urgent-high-risk";
+export type RefundSortOption =
+  | "created-desc"
+  | "created-asc"
+  | "amount-desc"
+  | "amount-asc";
+
+export type RefundTableQuery = {
+  searchText: string;
+  status: RefundStatusFilter;
+  channel: RefundChannelFilter;
+  risk: RefundRiskFilter;
+  sort: RefundSortOption;
+};
+
 const openRefundStatuses = new Set<RefundStatus>([
   "pending_review",
   "approved",
@@ -43,6 +60,14 @@ const openRefundStatuses = new Set<RefundStatus>([
 ]);
 
 const urgentRefundPriorities = new Set<RefundPriority>(["urgent", "high"]);
+
+export const defaultRefundTableQuery: RefundTableQuery = {
+  channel: "all",
+  risk: "all",
+  searchText: "",
+  sort: "created-desc",
+  status: "all",
+};
 
 export const refundOperations: RefundOperation[] = [
   {
@@ -159,14 +184,56 @@ export function calculateRefundMetrics(
     openRefunds: refunds.filter((refund) =>
       openRefundStatuses.has(refund.status),
     ).length,
-    urgentRefunds: refunds.filter((refund) =>
-      urgentRefundPriorities.has(refund.priority),
-    ).length,
+    urgentRefunds: refunds.filter(isUrgentOrHighRiskRefund).length,
     averageRefundAmountCents:
       refunds.length === 0
         ? 0
         : Math.round(totalRefundAmountCents / refunds.length),
   };
+}
+
+export function isUrgentOrHighRiskRefund(refund: RefundOperation) {
+  return urgentRefundPriorities.has(refund.priority);
+}
+
+export function getRefundTableRows(
+  refunds: RefundOperation[],
+  query: RefundTableQuery,
+) {
+  const searchText = query.searchText.trim().toLowerCase();
+
+  return refunds
+    .filter((refund) => {
+      const matchesSearch =
+        searchText.length === 0 ||
+        refund.id.toLowerCase().includes(searchText) ||
+        refund.orderId.toLowerCase().includes(searchText) ||
+        refund.customerLabel.toLowerCase().includes(searchText);
+      const matchesStatus =
+        query.status === "all" || refund.status === query.status;
+      const matchesChannel =
+        query.channel === "all" || refund.channel === query.channel;
+      const matchesRisk =
+        query.risk === "all" || isUrgentOrHighRiskRefund(refund);
+
+      return matchesSearch && matchesStatus && matchesChannel && matchesRisk;
+    })
+    .sort((firstRefund, secondRefund) => {
+      if (query.sort === "amount-desc" || query.sort === "amount-asc") {
+        const amountDifference =
+          firstRefund.amountCents - secondRefund.amountCents;
+
+        return query.sort === "amount-desc"
+          ? -amountDifference
+          : amountDifference;
+      }
+
+      const dateDifference =
+        new Date(`${firstRefund.createdAt}T00:00:00.000Z`).getTime() -
+        new Date(`${secondRefund.createdAt}T00:00:00.000Z`).getTime();
+
+      return query.sort === "created-desc" ? -dateDifference : dateDifference;
+    });
 }
 
 export function formatCurrency(amountCents: number, currency: "USD") {
