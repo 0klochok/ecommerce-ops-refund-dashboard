@@ -3,12 +3,58 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 0 - repository foundation
-- Overall status: Phase 0 implemented; structure closure check passed
-- Quality gate status: green after Phase 0 structure closure check
+- Phase: Phase 1 - static refund dashboard UI + typed mock data
+- Overall status: Phase 1 implemented; automated quality gate passed; browser QA passed via local dev server screenshot check
+- Quality gate status: green after Phase 1 validation
 - Current branch: `main`
-- Git status: closure check documentation update pending; Codex has not staged, committed, or pushed
+- Git status: Phase 1 changes are unstaged; Codex has not staged, committed, or pushed
 - Main blocker: none
+
+## Phase 1 - Static Refund Dashboard UI - 2026-06-18
+
+### Summary
+
+- Replaced the Phase 0 scaffold screen with a static refund operations dashboard shell.
+- Added typed synthetic refund/order operations data with no backend, database, auth, external service, or network calls.
+- Added derived refund metrics for total refunded, open refunds, urgent/high-risk refunds, average refund, and record count.
+- Rendered KPI cards and a refund operations queue table with status and priority/SLA badges.
+- Updated unit and Playwright tests to cover the Phase 1 dashboard.
+
+### Files Changed
+
+- `src/lib/mock-data/refunds.ts`: typed mock refund dataset, metric helper, and formatting helpers.
+- `src/app/(dashboard)/page.tsx`: static Phase 1 dashboard UI using the typed mock data.
+- `tests/unit/refunds.test.ts`: unit tests for derived refund metrics, including empty-state metrics.
+- `tests/unit/page.test.tsx`: dashboard render smoke test.
+- `e2e/home.spec.ts`: Playwright smoke test for the Phase 1 page.
+- `docs/STATE.md`: Phase 1 summary, validation results, QA notes, and next phase recommendation.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/smoke tests | `pnpm test` | pass | 2 test files, 3 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` prerendered as static content |
+| E2E smoke | `pnpm e2e` | pass | 1 Playwright Chromium test passed |
+
+### Manual QA
+
+- Status: pass.
+- Ran `pnpm dev` and confirmed `http://localhost:3000` returned HTTP 200.
+- Captured and inspected a full-page browser screenshot with the repository-local Playwright browser using `PLAYWRIGHT_BROWSERS_PATH=0`.
+- Verified the dashboard heading, KPI cards, refund table, and first refund row render with no obvious runtime error overlay.
+- Note: the Node-backed in-app browser path failed with a Windows sandbox `CreateProcessAsUserW failed: 5` error, so the browser screenshot was captured through the Playwright CLI instead.
+
+### Skipped Or Pending
+
+- No required automated validation gates were skipped.
+- No backend, database, auth, external service, Stripe webhook, CSV, alert-rule, GitHub Actions, dependency, commit, push, tag, or remote changes were made.
+
+### Next Recommended Phase
+
+Begin Phase 2 with mock-only interactive table behavior, such as client-side search, filters, sorting, and pagination for the refund/order operations queue. Keep it local-first and static until the UI contract is stable.
 
 ## Phase 0 Objective
 
