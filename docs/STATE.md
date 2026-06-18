@@ -3,12 +3,72 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 2.3 - responsive UX and accessibility hardening
-- Overall status: Phase 2.3 narrow auto-scroll repair implemented; automated quality gate passed; rendered QA passed through Playwright fallback after in-app Browser sandbox failure
-- Quality gate status: green after narrow auto-scroll repair validation
+- Phase: Phase 2.4 - portfolio-ready responsive QA and polish
+- Overall status: Phase 2.4 responsive QA completed; no app-code UI or accessibility defects were found; automated quality gate passed; rendered QA passed through Playwright fallback after in-app Browser sandbox failure
+- Quality gate status: green after Phase 2.4 QA validation
 - Current branch: `main`
-- Git status: Phase 2.3 and narrow auto-scroll repair changes are unstaged; Codex has not staged, committed, or pushed
+- Git status: Phase 2.4 documentation update is unstaged; Codex has not staged, committed, or pushed
 - Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; Playwright rendered fallback passed
+
+## Phase 2.4 - Portfolio-Ready Responsive QA And Polish - 2026-06-18
+
+### Summary
+
+- Reviewed the current refund operations dashboard at desktop `1280x900`, `900x900`, mobile `390x900`, and an extra small-mobile guard width of `320x900`.
+- Verified the existing KPI cards, filter controls, table containment, selected detail panel, X close button, focus return, 900px auto-scroll, mobile auto-scroll, desktop non-scroll behavior, and no page-level horizontal overflow.
+- Found no verified dashboard code defect requiring a UI, accessibility, test, architecture, backend, API, data, Stripe, CSV, dependency, or visual-identity change.
+- Kept the phase as a docs-only QA record so existing dashboard behavior and component architecture remain unchanged.
+- Noted that the visible circular Next.js dev indicator appears in screenshots taken from `pnpm dev`; this is dev-server chrome, not dashboard UI. Portfolio screenshots should be captured from a production build/preview path when that workflow is added.
+
+### Files Changed
+
+- `docs/STATE.md`: added this Phase 2.4 QA record, validation results, manual/browser QA notes, generated artifact status, scope confirmations, skipped/deferred checks, and known limitations.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files, 17 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` and `/_not-found` prerendered as static content |
+| E2E | `pnpm e2e` | pass | 5 Playwright Chromium tests passed, covering the main dashboard flow, narrow auto-scroll, desktop non-scroll, and responsive containment |
+| Browser validation path | in-app Browser bootstrap | blocked | Failed with `node_repl kernel exited unexpectedly` and `windows sandbox failed: runner error: CreateProcessAsUserW failed: 5`; used project Playwright workflow as fallback |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors after the docs update |
+| Git status | `git status --short` | pass | Only `docs/STATE.md` is modified for Phase 2.4 |
+
+### Manual And Browser QA
+
+- Status: pass via Playwright-rendered local-app QA fallback; in-app Browser QA remains blocked by the Windows sandbox process-launch failure above.
+- Flow under test: `/` -> refund row/detail interactions at desktop, 900px, and mobile widths -> stable controls, contained table scroll, accessible detail panel, correct open/close scrolling, and no runtime overlay.
+- Confirmed page identity as `http://localhost:3000/` with title `E-commerce Ops Refund Dashboard`.
+- Confirmed no relevant browser console warnings, no page errors, and no visible Next.js error overlay during the Playwright QA loop.
+- Confirmed desktop `1280x900`: row click opens the detail panel beside the table without forced page scroll; X closes it; focus returns to the selected row action; page-level horizontal overflow stays absent.
+- Confirmed `900x900`: row click scrolls toward the detail panel; X closes the panel and scrolls back toward the selected row; focus return works; table scrolling remains contained; page-level horizontal overflow stays absent.
+- Confirmed mobile `390x900`: row click scrolls toward the detail panel; X closes the panel and returns focus to the selected row; long detail/table content stays within contained scrollers; page-level horizontal overflow stays absent.
+- Confirmed extra small-mobile `320x900`: heading, intro copy, demo-mode badge, and KPI cards wrap without visible clipping.
+- Confirmed generated QA screenshots were written outside the repo under `%TEMP%\codex-refund-dashboard-qa`.
+
+### Generated Artifacts And Git
+
+- `next-env.d.ts` was transiently changed by the Next dev/build validation cycle from `./.next/dev/types/routes.d.ts` to `./.next/types/routes.d.ts`, then restored to the pre-validation tracked content.
+- `.next`, `node_modules`, `coverage`, `test-results`, `playwright-report`, `.scratch`, and `next-env.d.ts` have no final modified/untracked output from this phase.
+- Final `git status --short`: `docs/STATE.md` is modified.
+- No commits, pushes, tags, branch changes, history rewrites, remote changes, staging, GitHub Actions, dependencies, backend/API/database/auth/Stripe/CSV changes, or product-scope expansion were made.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- No source tests were added or updated because this pass found no verified code defect; existing Vitest and Playwright tests already cover the polished responsive behavior under review.
+- Human in-app Browser QA remains deferred because Browser bootstrap fails with the Windows sandbox process-launch error.
+- Clean portfolio screenshot capture from production preview remains deferred; screenshots taken from `pnpm dev` include the dev-only Next.js indicator.
+- Backend persistence, API routes, auth, CSV flows, Stripe test webhooks, broader redesign, dependency changes, and GitHub Actions remain out of scope.
+
+### Known Limitations
+
+- The dashboard remains a client-side mock-data Phase 2 surface, not a backend-connected operations system.
+- The current screenshot/QA workflow uses Playwright fallback because the in-app Browser connector cannot bootstrap in this Windows sandbox.
+- `docs/CONTEXT.md`, `docs/TDD.md`, and `README.md` still contain earlier-phase wording in places; they were not updated because this Phase 2.4 pass did not change setup, product scope, architecture, or test strategy.
 
 ## Phase 2.3 Repair - Narrow Refund Detail Auto-Scroll - 2026-06-18
 
