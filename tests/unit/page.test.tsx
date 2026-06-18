@@ -27,6 +27,26 @@ describe("Home", () => {
     );
     expect(screen.getByText(/interactive refund operations queue/i)).toBeTruthy();
     expect(
+      screen.getByRole("region", {
+        name: /refund table controls/i,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", {
+        name: /refund operations results/i,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", {
+        name: /scrollable refund operations table/i,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("table", {
+        name: /refund operations queue/i,
+      }),
+    ).toBeTruthy();
+    expect(
       screen.getByRole("button", {
         name: /rfnd_demo_1001/i,
       }),
@@ -267,9 +287,11 @@ describe("Home", () => {
     const refundButton = screen.getByRole("button", {
       name: /view details for refund rfnd_demo_1001, order ord-1048, returning customer a/i,
     });
+    const refundRow = refundButton.closest("tr");
 
     expect(refundButton.getAttribute("aria-expanded")).toBe("false");
     expect(refundButton.getAttribute("aria-controls")).toBeNull();
+    expect(refundRow?.getAttribute("aria-selected")).toBe("false");
 
     fireEvent.click(refundButton);
 
@@ -277,9 +299,10 @@ describe("Home", () => {
     expect(refundButton.getAttribute("aria-controls")).toBe(
       "selected-refund-detail",
     );
+    expect(refundRow?.getAttribute("aria-selected")).toBe("true");
     expect(
       screen.getByRole("complementary", {
-        name: /selected refund detail/i,
+        name: /selected refund detail rfnd_demo_1001/i,
       }).getAttribute("id"),
     ).toBe("selected-refund-detail");
 

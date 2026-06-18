@@ -1,7 +1,7 @@
 "use client";
 
 import { XIcon } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   defaultRefundTableQuery,
   formatCurrency,
@@ -80,16 +80,32 @@ type RefundOperationsTableProps = {
 };
 
 const controlClassName =
-  "h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
+  "h-10 min-w-0 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-300";
 
 const detailPanelId = "selected-refund-detail";
+const detailPanelTitleId = "selected-refund-detail-title";
+const detailPanelHeadingId = "selected-refund-detail-heading";
+const tableScrollHelpId = "refund-table-scroll-help";
+const narrowRefundLayoutQuery = "(max-width: 900px)";
+
+function isNarrowRefundLayout() {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(narrowRefundLayoutQuery).matches
+  );
+}
 
 export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
   const [query, setQuery] = useState<RefundTableQuery>(
     defaultRefundTableQuery,
   );
   const [selectedRefundId, setSelectedRefundId] = useState<string | null>(null);
+  const detailPanelRef = useRef<HTMLElement | null>(null);
+  const lastActivatedRefundIdRef = useRef<string | null>(null);
+  const refundButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const selectedRefundButtonRef = useRef<HTMLButtonElement | null>(null);
+  const shouldScrollToDetailRef = useRef(false);
 
   const visibleRefunds = useMemo(
     () => getRefundTableRows(refunds, query),
@@ -108,6 +124,27 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
     query.channel !== "all" ||
     query.risk !== "all" ||
     query.sort !== defaultRefundTableQuery.sort;
+
+  useEffect(() => {
+    if (!selectedRefund || !shouldScrollToDetailRef.current) {
+      return;
+    }
+
+    shouldScrollToDetailRef.current = false;
+
+    if (!isNarrowRefundLayout()) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      detailPanelRef.current?.scrollIntoView({
+        block: "start",
+        inline: "nearest",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrameId);
+  }, [selectedRefund]);
 
   function updateQuery(nextQuery: Partial<RefundTableQuery>) {
     const mergedQuery = {
@@ -132,19 +169,41 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
     setQuery(defaultRefundTableQuery);
   }
 
+  function selectRefund(refundId: string) {
+    lastActivatedRefundIdRef.current = refundId;
+    shouldScrollToDetailRef.current = true;
+    setSelectedRefundId(refundId);
+  }
+
   function closeSelectedRefund() {
     const returnFocusTarget = selectedRefundButtonRef.current;
+    const returnScrollTarget =
+      lastActivatedRefundIdRef.current === null
+        ? null
+        : (refundButtonRefs.current.get(lastActivatedRefundIdRef.current) ??
+          null);
 
     setSelectedRefundId(null);
     returnFocusTarget?.focus();
+
+    if (!returnScrollTarget || !isNarrowRefundLayout()) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      returnScrollTarget.scrollIntoView({
+        block: "nearest",
+        inline: "nearest",
+      });
+    });
   }
 
   return (
     <div className="flex flex-col gap-4">
       <section aria-label="Refund table controls">
-        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="min-w-0 rounded-md border border-slate-200 bg-white p-4 shadow-sm">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(14rem,1.4fr)_repeat(2,minmax(9rem,1fr))] xl:grid-cols-[minmax(14rem,1.4fr)_repeat(4,minmax(9rem,1fr))_auto] xl:items-end">
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-1">
+            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-1">
               Search refunds
               <input
                 aria-label="Search refunds by refund id, order id, or customer"
@@ -158,7 +217,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
               />
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium text-slate-700">
               Status
               <select
                 aria-label="Status filter"
@@ -179,7 +238,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium text-slate-700">
               Channel
               <select
                 aria-label="Channel filter"
@@ -200,7 +259,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium text-slate-700">
               Risk
               <select
                 aria-label="Risk filter"
@@ -220,7 +279,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1 text-sm font-medium text-slate-700">
+            <label className="flex min-w-0 flex-col gap-1 text-sm font-medium text-slate-700">
               Sort
               <select
                 aria-label="Sort refund table"
@@ -258,11 +317,22 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
         </div>
       </section>
 
-      <div
-        className={`grid gap-4 ${selectedRefund ? "xl:grid-cols-[minmax(0,1fr)_minmax(20rem,22rem)]" : ""}`}
+      <section
+        aria-label="Refund operations results"
+        className={`grid min-w-0 gap-4 ${selectedRefund ? "xl:grid-cols-[minmax(0,1fr)_minmax(20rem,22rem)]" : ""}`}
       >
-        <div className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
+        <div className="min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+          <p className="sr-only" id={tableScrollHelpId}>
+            The refund table scrolls horizontally on narrower screens while the
+            filter controls remain full width above it.
+          </p>
+          <div
+            aria-describedby={tableScrollHelpId}
+            aria-label="Scrollable refund operations table"
+            className="min-w-0 overflow-x-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            role="region"
+            tabIndex={0}
+          >
             <table className="min-w-[72rem] divide-y divide-slate-200 text-left text-sm">
               <caption className="sr-only">
                 Refund operations queue with synthetic refund records, filters,
@@ -325,6 +395,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
 
                     return (
                       <tr
+                        aria-selected={isSelected}
                         className={`align-top transition ${
                           isSelected ? "bg-slate-50" : "hover:bg-slate-50"
                         }`}
@@ -337,9 +408,26 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
                             }
                             aria-expanded={isSelected}
                             aria-label={`View details for refund ${refund.id}, order ${refund.orderId}, ${refund.customerLabel}`}
-                            className="rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                            onClick={() => setSelectedRefundId(refund.id)}
+                            className="rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                            onClick={() => selectRefund(refund.id)}
                             ref={(button) => {
+                              if (button === null) {
+                                const registeredButton =
+                                  refundButtonRefs.current.get(refund.id);
+
+                                if (
+                                  registeredButton ===
+                                  selectedRefundButtonRef.current
+                                ) {
+                                  selectedRefundButtonRef.current = null;
+                                }
+
+                                refundButtonRefs.current.delete(refund.id);
+                                return;
+                              }
+
+                              refundButtonRefs.current.set(refund.id, button);
+
                               if (isSelected) {
                                 selectedRefundButtonRef.current = button;
                               }
@@ -403,27 +491,34 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
 
         {selectedRefund ? (
           <aside
-            aria-label="Selected refund detail"
-            className="relative rounded-md border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6 xl:self-start"
+            aria-labelledby={`${detailPanelTitleId} ${detailPanelHeadingId}`}
+            className="relative min-w-0 overflow-hidden rounded-md border border-slate-200 bg-white p-5 shadow-sm xl:sticky xl:top-6 xl:self-start"
             id={detailPanelId}
+            ref={detailPanelRef}
           >
+            <h2 className="sr-only" id={detailPanelTitleId}>
+              Selected refund detail
+            </h2>
             <button
               aria-label="Close refund detail panel"
-              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200"
+              className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white [&_svg]:size-4"
               onClick={closeSelectedRefund}
               type="button"
             >
-              <XIcon aria-hidden="true" className="size-4" />
+              <XIcon aria-hidden="true" />
             </button>
             <div className="flex flex-col gap-5">
               <div className="pr-8">
                 <p className="text-sm font-medium uppercase text-slate-500">
                   Selected refund
                 </p>
-                <h3 className="mt-2 text-xl font-semibold text-slate-950">
+                <h3
+                  className="mt-2 break-words text-xl font-semibold text-slate-950"
+                  id={detailPanelHeadingId}
+                >
                   {selectedRefund.id}
                 </h3>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 break-words text-sm text-slate-500">
                   {selectedRefund.orderId} - {selectedRefund.customerLabel}
                 </p>
               </div>
@@ -469,7 +564,7 @@ export function RefundOperationsTable({ refunds }: RefundOperationsTableProps) {
             </div>
           </aside>
         ) : null}
-      </div>
+      </section>
     </div>
   );
 }
@@ -478,7 +573,7 @@ function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
       <p className="text-xs font-medium uppercase text-slate-500">{label}</p>
-      <p className="mt-1 font-medium text-slate-950">{value}</p>
+      <p className="mt-1 break-words font-medium text-slate-950">{value}</p>
     </div>
   );
 }

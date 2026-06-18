@@ -3,12 +3,126 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 2.2 repair - stable refund filter layout
-- Overall status: Phase 2.2 repair completed; automated quality gate passed; rendered QA passed through Playwright fallback after Browser plugin sandbox failure
-- Quality gate status: green after Phase 2.2 repair validation
+- Phase: Phase 2.3 - responsive UX and accessibility hardening
+- Overall status: Phase 2.3 narrow auto-scroll repair implemented; automated quality gate passed; rendered QA passed through Playwright fallback after in-app Browser sandbox failure
+- Quality gate status: green after narrow auto-scroll repair validation
 - Current branch: `main`
-- Git status: Phase 2.2 repair changes are unstaged; Codex has not staged, committed, or pushed
-- Main blocker: none
+- Git status: Phase 2.3 and narrow auto-scroll repair changes are unstaged; Codex has not staged, committed, or pushed
+- Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; Playwright rendered fallback passed
+
+## Phase 2.3 Repair - Narrow Refund Detail Auto-Scroll - 2026-06-18
+
+### Summary
+
+- Added narrow-layout page auto-scroll for the refund detail panel flow at `max-width: 900px` only.
+- Row click and keyboard activation now record the last activated refund row, then scroll the page toward the detail panel after it renders on 900px/mobile layouts.
+- Closing the detail panel with the X button still returns focus to the selected row action, and now scrolls back toward that last activated row on 900px/mobile layouts when the row still exists.
+- Desktop layouts do not receive the mobile-style forced page scroll.
+- Preserved selected-row visual state, keyboard activation, filters/search/sort, table-contained horizontal scrolling, filter-card stability, and no page-level horizontal overflow.
+
+### Files Changed
+
+- `src/app/(dashboard)/refund-operations-table.tsx`: row-keyed refs, detail panel ref, last-activated row tracking, `matchMedia("(max-width: 900px)")` guard, and `scrollIntoView` open/close behavior.
+- `e2e/home.spec.ts`: Playwright coverage for 900px open scroll, 900px close scroll-back, desktop non-scroll behavior, and retained responsive containment checks.
+- `docs/STATE.md`: this repair record, validation results, QA status, generated artifact status, and scope notes.
+- Existing dirty file preserved: `tests/unit/page.test.tsx` remains modified from Phase 2.3; this repair did not require a unit test update.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors after the scroll patch |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files, 17 tests passed after adding a `matchMedia` function guard for jsdom |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` and `/_not-found` prerendered as static content |
+| E2E | `pnpm e2e` | pass | 5 Playwright Chromium tests passed, including the new narrow auto-scroll test and desktop non-scroll assertion |
+| Browser validation path | in-app Browser bootstrap | blocked | Failed with Windows sandbox `CreateProcessAsUserW failed: 5`; used project Playwright workflow as fallback |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors; Git reported existing LF-to-CRLF working-copy warnings |
+| Generated artifact status | `git status --short -- .next node_modules coverage test-results playwright-report .scratch next-env.d.ts` | pass | No output after restoring transient `next-env.d.ts` route-reference churn from validation |
+
+### Manual And Browser QA
+
+- Status: pass via Playwright-rendered local-app QA fallback; human in-app Browser QA remains blocked by the Browser bootstrap failure above.
+- Flow under test: `/` -> refund row/detail interaction -> mobile detail scroll, mobile close scroll-back, desktop non-scroll, focus return, and responsive containment.
+- Confirmed desktop width: row click opens the detail panel, no mobile-style forced page scroll is applied, X closes the panel, focus returns to the row action, filters/search/sort remain usable, and page-level horizontal overflow stays absent.
+- Confirmed 900px width: row click opens the detail panel and moves page scroll toward it, X closes the panel and moves page scroll back toward the last activated row, focus return still works, filter/control card remains stable, detail panel stays below the table without collapsing controls, table scrolling remains contained, and page-level horizontal overflow stays absent.
+- Confirmed narrow/mobile-like width through the responsive Playwright loop: detail panel remains usable, controls stay stable, table scrolling remains contained, and page-level horizontal overflow stays absent.
+- Note: a Next dev server for this repository was reported on `http://localhost:3000` during the fallback QA attempt; Codex did not stop or kill it.
+
+### Generated Artifacts And Git
+
+- `next-env.d.ts` was transiently changed by Next validation between production and dev route type references, then restored to the pre-validation tracked content.
+- `git status --short -- .next node_modules coverage test-results playwright-report .scratch next-env.d.ts`: no output after cleanup.
+- Final `git status --short`: `docs/STATE.md`, `e2e/home.spec.ts`, `src/app/(dashboard)/refund-operations-table.tsx`, and `tests/unit/page.test.tsx` are modified.
+- No backend, database, API route, auth, Stripe, CSV, dependency, GitHub Actions, commit, push, tag, remote, or product-scope expansion was added.
+- Codex did not run `git add`, `git commit`, or `git push`.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- Unit layout assertions were not added because jsdom cannot verify page scroll or rendered overflow; this behavior is covered by Playwright.
+- Human in-app Browser QA remains deferred because the Browser bootstrap fails with the Windows sandbox process-launch error.
+- Backend persistence, API routes, auth, CSV flows, Stripe test webhooks, broader mobile redesign, and GitHub Actions remain deferred to later approved phases.
+
+## Phase 2.3 - Responsive UX And Accessibility Hardening - 2026-06-18
+
+### Summary
+
+- Preserved the Phase 2.2 layout contract: the `Refund table controls` region stays full-width above the conditional table/detail area when a refund detail panel opens.
+- Added explicit `Refund operations results` and `Scrollable refund operations table` regions so the table/detail area has stable accessible landmarks.
+- Hardened responsive containment with `min-w-0` on controls, table/detail grid, table card, and detail panel so horizontal overflow stays inside the table scroller.
+- Improved keyboard/a11y affordances with a focusable table scroller, screen-reader scroll guidance, selected-row `aria-selected`, a labelled detail panel, stronger focus-visible rings, and overflow-safe detail text wrapping.
+- Expanded Playwright coverage for desktop, 900px, and narrow widths, including controls-region stability, contained table scrolling, page-level overflow prevention, detail open/close reachability, accessible detail naming, and focus return.
+- Kept the phase client-side only with deterministic mock data only.
+
+### Files Changed
+
+- `src/app/(dashboard)/refund-operations-table.tsx`: responsive containment, accessible results/table-scroll/detail regions, selected row state, focus-visible states, and detail text wrapping.
+- `tests/unit/page.test.tsx`: jsdom-verifiable semantic coverage for the new regions, table accessible name, selected row state, detail labelling, and focus return.
+- `e2e/home.spec.ts`: responsive Playwright coverage at desktop, 900px, and narrow widths plus retained main dashboard flow coverage.
+- `docs/STATE.md`: Phase 2.3 summary, validation, manual QA status, generated artifact status, limitations, and scope notes.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files, 17 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` and `/_not-found` prerendered as static content |
+| E2E | `pnpm e2e` | pass | 4 Playwright Chromium tests passed, including desktop, 900px, and narrow responsive layout checks |
+| Browser validation path | in-app Browser bootstrap | blocked | Failed with Windows sandbox `CreateProcessAsUserW failed: 5`; used project Playwright workflow as fallback |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors; Git reported existing LF-to-CRLF working-copy warnings |
+| Generated artifact status | `git status --short -- .next node_modules coverage test-results playwright-report .scratch next-env.d.ts` | pass | No output after validation |
+
+### Manual And Browser QA
+
+- Status: pass via Playwright-rendered QA fallback; human in-app browser QA remains required before final acceptance because the in-app Browser bootstrap is blocked in this environment.
+- Flow under test: `/` -> refund row/detail interaction -> controls remain stable, table scroll stays contained, detail panel remains reachable, and keyboard/focus behavior still works.
+- Confirmed page load, dashboard heading, KPI cards, no framework runtime/build overlay text, refund table rendering, controls region visibility, results region visibility, and scrollable table region visibility.
+- Confirmed detail panel is hidden on initial load.
+- Confirmed row click opens the detail panel, the detail panel has an accessible name containing `Selected refund detail` and the selected refund id, and the selected row exposes selected state.
+- Confirmed X closes the detail panel and returns focus to the selected row action.
+- Confirmed keyboard activation with Enter still opens the detail panel.
+- Confirmed search, status, channel, risk, sort, reset, and clear filters still work.
+- Confirmed sorting/filtering/reset do not auto-reopen a closed detail panel.
+- Confirmed empty state appears when no rows match and clear filters restores rows without opening the detail panel.
+- Confirmed desktop, 900px, and narrow/mobile-like widths avoid page-level horizontal overflow while the table scroll remains contained inside the table region.
+
+### Generated Artifacts And Git
+
+- `git status --short -- .next node_modules coverage test-results playwright-report .scratch next-env.d.ts`: no output after validation; no generated artifacts are modified or untracked through this check.
+- Final `git status --short`: `docs/STATE.md`, `e2e/home.spec.ts`, `src/app/(dashboard)/refund-operations-table.tsx`, and `tests/unit/page.test.tsx` are modified.
+- No backend, database, API route, auth, external service, paid API, dependency, GitHub Actions, commit, push, tag, remote, generated versioned artifact, or product-scope expansion was added.
+- Codex did not run `git add`, `git commit`, or `git push`.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- In-app Browser QA was deferred because the Browser bootstrap failed with `CreateProcessAsUserW failed: 5`; Playwright rendered QA covered the requested widths and interactions, but human browser QA is still recommended before final acceptance.
+- No unit layout assertions were added because jsdom cannot measure rendered layout or overflow; layout behavior is covered in Playwright.
+- No new dependencies or shadcn/ui components were added.
+- Backend persistence, API routes, auth, CSV flows, Stripe test webhooks, broader mobile redesign, and GitHub Actions remain deferred to later approved phases.
 
 ## Phase 2.2 Repair - Stable Refund Filter Layout - 2026-06-18
 
