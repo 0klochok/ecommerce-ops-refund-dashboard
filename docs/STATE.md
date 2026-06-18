@@ -3,12 +3,89 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 2.4 - portfolio-ready responsive QA and polish
-- Overall status: Phase 2.4 responsive QA completed; no app-code UI or accessibility defects were found; automated quality gate passed; rendered QA passed through Playwright fallback after in-app Browser sandbox failure
-- Quality gate status: green after Phase 2.4 QA validation
+- Phase: Phase 2.5 - production-preview QA and clean demo evidence
+- Overall status: Phase 2.5 production-preview QA completed; standard validation gate passed; no production-preview app defect was found; clean screenshots were captured outside the repo through Playwright fallback after in-app Browser bootstrap failed
+- Quality gate status: green after Phase 2.5 validation and production-preview QA
 - Current branch: `main`
-- Git status: Phase 2.4 documentation update is unstaged; Codex has not staged, committed, or pushed
-- Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; Playwright rendered fallback passed
+- Git status: Phase 2.5 documentation update is unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; production-preview QA passed through repo-local Playwright fallback
+
+## Phase 2.5 - Production-Preview QA And Clean Demo Evidence - 2026-06-18
+
+### Summary
+
+- Ran the full requested validation gate before production-preview QA.
+- Built the app with `pnpm build`, then ran the production server with `pnpm exec next start -p 3000 -H 127.0.0.1` via PowerShell `Start-Process`.
+- Verified the dashboard in production-preview mode at desktop `1280x900`, exact `900x900`, and mobile `390x900` widths.
+- Confirmed the Phase 2.4 deferred clean screenshot workflow: captured production-preview screenshots without the Next.js dev indicator.
+- Found no verified production-preview defect, so no app source, tests, backend, API, database, auth, Stripe, payment, CSV, dependency, design-system, or CI files were changed.
+- Stopped the production-preview server process started for QA.
+
+### Files Changed
+
+- `docs/STATE.md`: added this Phase 2.5 production-preview QA record, validation results, artifact status, skipped/deferred notes, and scope confirmation.
+
+### Exact Commands Run
+
+| Purpose | Command | Result |
+|---|---|---|
+| Initial status | `git status --short` | pass; no output |
+| Repo grounding | `rg --files` | pass |
+| Validation | `pnpm lint` | pass; ESLint completed with no errors |
+| Validation | `pnpm typecheck` | pass; `tsc --noEmit` completed with no errors |
+| Validation | `pnpm test` | pass; 2 test files and 17 tests passed |
+| Validation | `pnpm build` | pass; Next.js production build completed and `/` plus `/_not-found` prerendered |
+| Validation | `pnpm e2e` | pass; 5 Chromium Playwright tests passed |
+| Validation | `git diff --check` | pass; Git emitted the existing `next-env.d.ts` LF-to-CRLF working-copy warning |
+| Port check | `Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue` | pass; no listener before preview start, no listener after preview stop |
+| Production preview | `pnpm exec next start -p 3000 -H 127.0.0.1` | pass; served `http://127.0.0.1:3000` from the production build |
+| Browser path attempt | in-app Browser bootstrap through the Browser plugin | blocked; `node_repl kernel exited unexpectedly` with `windows sandbox failed: runner error: CreateProcessAsUserW failed: 5` |
+| Playwright fallback setup | `node -e <inline production-preview Playwright QA script>` | first run failed before app QA because Playwright looked for the global browser cache |
+| Playwright fallback QA | `node -e <inline production-preview Playwright QA script>` with `PLAYWRIGHT_BROWSERS_PATH=0` before Playwright load | pass; production-preview browser QA and screenshots completed |
+| Preview cleanup | `Stop-Process -Id 15912` | pass; stopped the preview server started by Codex |
+
+### Production-Preview QA
+
+- Status: pass via repo-local Playwright fallback against `http://127.0.0.1:3000`.
+- Page identity: title `E-commerce Ops Refund Dashboard`; dashboard heading rendered.
+- Runtime health: no page errors, no browser console errors, no browser console warnings, no runtime overlay, and no Next.js dev indicator DOM in production-preview mode.
+- Desktop `1280x900`: clicking `rfnd_demo_1001` opened the selected refund detail panel without forced page scroll; closing with X removed the panel and returned focus to the selected row action.
+- Exact `900x900`: clicking `rfnd_demo_1001` opened the panel and auto-scrolled toward it; clicking `rfnd_demo_1003` updated the already-open panel; closing after the second selection scrolled back to `rfnd_demo_1003`, not the first row, and focus returned to the second row action.
+- Mobile `390x900`: clicking `rfnd_demo_1001` opened the panel and auto-scrolled toward it; closing with X scrolled back to the selected row and returned focus.
+- Filters/search/sort: search by `ord-1042`, combined status/channel filters, urgent/high-risk filter, amount sort, and date sort all worked in production preview.
+- Selected-row removal: after selecting `rfnd_demo_1001`, filtering to `not-a-real-refund` showed the empty state and cleared the detail panel without instability.
+- Layout containment: no page-level horizontal overflow at `900px` or mobile width; table-contained horizontal scrolling remained available and contained.
+
+### Screenshot And Artifact Status
+
+- The repository does not currently have a `docs/demo`, `docs/assets`, or equivalent documentation asset folder, so Codex did not create a new asset structure.
+- Production-preview screenshots were saved outside the repo under `%TEMP%\codex-refund-dashboard-prod-preview-qa\screenshots`.
+- Captured screenshots:
+  - `C:\Users\alex\AppData\Local\Temp\codex-refund-dashboard-prod-preview-qa\screenshots\desktop-dashboard-default.png`
+  - `C:\Users\alex\AppData\Local\Temp\codex-refund-dashboard-prod-preview-qa\screenshots\desktop-selected-row-detail-panel.png`
+  - `C:\Users\alex\AppData\Local\Temp\codex-refund-dashboard-prod-preview-qa\screenshots\900px-selected-row-detail-panel.png`
+  - `C:\Users\alex\AppData\Local\Temp\codex-refund-dashboard-prod-preview-qa\screenshots\mobile-selected-row-detail-panel.png`
+- Visual inspection confirmed the captures are clean production-preview screenshots with no Next.js dev indicator.
+- Normal ignored validation/build output exists in the repo working directory, including `.next` from `pnpm build`/`next start` and Playwright report/test-result output from `pnpm e2e`; these are not screenshot artifacts and are not tracked by Git.
+
+### Scope Confirmation
+
+- No source changes were made because production-preview QA found no defect.
+- No commits, pushes, tags, staging, branch changes, history rewrites, remote changes, GitHub Actions, dependencies, backend/API/database/auth/Stripe/payment/CSV work, paid APIs, real data, or product redesign were added.
+- The production-preview server started for QA was stopped before completion.
+
+### Final Git State
+
+- `git status --short`: `M docs/STATE.md`.
+- `git diff --check`: pass; Git emitted the working-copy warning that `docs/STATE.md` LF will be replaced by CRLF the next time Git touches it.
+- `git diff --stat`: `docs/STATE.md` only.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- In-app Browser QA remains deferred because the Browser plugin bootstrap is blocked by the Windows sandbox process-launch failure above.
+- The first custom Playwright fallback attempt failed before app QA because it used Playwright's global browser cache; the corrected run set `PLAYWRIGHT_BROWSERS_PATH=0` to use the repo-local browser install and passed.
+- Screenshots remain outside the repo because no existing documentation asset location is present.
 
 ## Phase 2.4 - Portfolio-Ready Responsive QA And Polish - 2026-06-18
 
