@@ -3,12 +3,53 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Phase 1 data foundation
-- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, mock store adapter contracts, KPI/domain calculations, tests, and documentation are implemented. The existing visible dashboard still uses static mock data until a later connection phase.
-- Quality gate status: green after Phase 1 validation
+- Phase: Phase 2 dashboard overview and orders workflow
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, tests, and documentation are implemented.
+- Quality gate status: green after Phase 2 validation
 - Current branch: `main`
-- Git status: Phase 1 data foundation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
-- Main blocker: none for Phase 1. The project database maps to host port `5433` because an unrelated Docker container named `salesops-postgres` was already using host port `5432`.
+- Git status: Phase 2 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Main blocker: none. The project database maps to host port `5433`.
+
+## Phase 2 Dashboard Overview And Orders Workflow - 2026-06-19
+
+### Summary
+
+- Replaced the visible static refund dashboard route with a Prisma-backed operations overview at `/`.
+- Added KPI cards for gross revenue, order count, refund amount, refund rate, average order value, and unfulfilled orders using the Phase 1 KPI/domain layer.
+- Added a Recharts weekly revenue/refund chart using serialized server data.
+- Added a Prisma-backed orders queue at `/orders` with TanStack Table search, filters, date/total sorting, pagination, status badges, source labels, and detail links.
+- Added `/orders/[orderId]` with order summary, customer summary, line items, payment/refund/dispute records, fulfillment events, a back link, and route-specific not-found state.
+- Added server repositories/services for Prisma reads and DTO mapping, plus pure dashboard/order/formatting helpers.
+- Added shadcn/ui primitives: card, badge, button, input, select, table, and separator.
+- Updated README, context, runbook, and test documentation for the Phase 2 workflow.
+- No Prisma schema change, migration, real external API, Stripe webhook, CSV UI/export, auth, GitHub Actions, commit, push, tag, history rewrite, staging, or remote change was performed.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was already running |
+| Install | `pnpm install` | pass | Already up to date |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to ignored `src/generated/prisma` |
+| Prisma seed | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Lint | `pnpm lint` | pass | ESLint completed with no warnings or errors after a targeted TanStack Table lint suppression |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit tests | `pnpm test` | pass | 4 test files and 23 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/`, `/orders`, and `/orders/[orderId]` are dynamic routes |
+| E2E | `pnpm e2e -- --project=chromium` | pass | 1 Playwright Chromium test passed for overview, orders, filter/search, and order detail flow |
+| Git status | `git status --short` | pass | Implementation and documentation changes are unstaged; no git write operation was run |
+
+### Manual Verification
+
+- Recommended manual browser check: run `pnpm dev`, open `http://localhost:3000` and `http://localhost:3000/orders`, verify KPI plausibility, revenue/refund chart rendering, order search/filter/sort/pagination, and order detail navigation.
+- Recommended order detail check: search `ORD-DEMO-00017`, open the detail route, and confirm order summary, customer summary, line items, payment/refund/dispute records, and fulfillment events render.
+- Recommended production screenshot check: run `pnpm build`, then `pnpm exec next start -p 3000 -H 127.0.0.1`, and capture screenshots from `http://127.0.0.1:3000` and `/orders`.
+
+### Notes
+
+- The retained static refund mock helper and tests remain available but are no longer the primary routed dashboard workflow.
+- The app remains mock/no-paid-API only and uses seeded synthetic data.
+- Route handlers, CSV workflows, standalone refunds/disputes pages, customer detail pages, alert management, Stripe test webhooks, auth, and GitHub Actions remain out of scope.
 
 ## Phase 1 Data Foundation - 2026-06-19
 

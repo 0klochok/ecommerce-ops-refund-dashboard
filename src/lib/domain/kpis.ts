@@ -111,6 +111,10 @@ export function isCountedPaidOrder(order: KpiOrder) {
   );
 }
 
+export function isCompletedRefund(refund: KpiRefund) {
+  return completedRefundStatuses.has(refund.status);
+}
+
 export function isUnfulfilledPhysicalOrder(order: KpiOrder) {
   return (
     order.hasPhysicalItems &&

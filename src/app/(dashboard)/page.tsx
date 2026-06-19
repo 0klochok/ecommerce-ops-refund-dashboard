@@ -1,104 +1,141 @@
+import { KpiCard } from "@/components/dashboard/kpi-card";
+import { RevenueRefundChart } from "@/components/dashboard/revenue-refund-chart";
+import { Button } from "@/components/ui/button";
 import {
-  calculateRefundMetrics,
-  formatCurrency,
-  refundOperations,
-} from "@/lib/mock-data/refunds";
-import { RefundOperationsTable } from "./refund-operations-table";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { formatDate, formatMoney, formatPercent } from "@/lib/domain/formatters";
+import { getDashboardOverview } from "@/server/services/dashboard";
+import Link from "next/link";
 
-export default function Home() {
-  const refunds = refundOperations;
-  const metrics = calculateRefundMetrics(refunds);
-  const currency = refunds[0]?.currency ?? "USD";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
+export default async function DashboardPage() {
+  const overview = await getDashboardOverview();
   const kpis = [
     {
-      label: "Total refunded",
-      value: formatCurrency(metrics.totalRefundAmountCents, currency),
-      helper: `${metrics.totalRefunds} demo refund records`,
+      helper: "Paid, non-canceled order total",
+      label: "Gross revenue",
+      value: formatMoney(overview.kpis.grossRevenueCents),
     },
     {
-      label: "Open refunds",
-      value: metrics.openRefunds.toString(),
-      helper: "Pending, approved, or processing",
+      helper: "Paid, non-canceled orders",
+      label: "Order count",
+      value: overview.kpis.orderCount.toLocaleString("en-US"),
     },
     {
-      label: "Urgent / high risk",
-      value: metrics.urgentRefunds.toString(),
-      helper: "Needs same-day operations review",
+      helper: "Succeeded refund amount only",
+      label: "Refund amount",
+      value: formatMoney(overview.kpis.refundAmountCents),
     },
     {
-      label: "Average refund",
-      value: formatCurrency(metrics.averageRefundAmountCents, currency),
-      helper: "Across the static Phase 1 sample",
+      helper: "Refund amount divided by gross revenue",
+      label: "Refund rate",
+      value: formatPercent(overview.kpis.refundRate),
+    },
+    {
+      helper: "Gross revenue divided by order count",
+      label: "Average order value",
+      value: formatMoney(overview.kpis.averageOrderValueCents),
+    },
+    {
+      helper: "Physical orders not yet fulfilled",
+      label: "Unfulfilled orders",
+      value: overview.kpis.unfulfilledOrderCount.toLocaleString("en-US"),
     },
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-8 text-slate-950 sm:px-10">
-      <div className="mx-auto flex max-w-7xl flex-col gap-8">
-        <header className="flex flex-col gap-4 border-b border-slate-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm font-medium uppercase text-slate-500">
-              Phase 2 client-side interactions
-            </p>
-            <h1 className="mt-2 text-3xl font-semibold text-slate-950 sm:text-4xl">
-              Refund operations dashboard
-            </h1>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-              Portfolio dashboard shell for a small ecommerce operations team,
-              using typed mock refund data only. No customer, payment, store, or
-              webhook data is connected in this phase.
-            </p>
-          </div>
-          <div className="rounded-md border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-            <span className="font-medium text-slate-950">Demo mode:</span>{" "}
-            static mock data
-          </div>
-        </header>
+    <main className="mx-auto flex max-w-7xl flex-col gap-6 px-6 py-8">
+      <section className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="flex max-w-3xl flex-col gap-2">
+          <p className="text-sm font-medium text-muted-foreground">
+            Demo operations overview
+          </p>
+          <h1 className="text-3xl font-semibold tracking-normal">
+            Business-value operations overview
+          </h1>
+          <p className="text-muted-foreground">
+            Revenue, refund, fulfillment, and payment risk signals from seeded
+            demo data only.
+          </p>
+        </div>
+        <Button asChild variant="outline">
+          <Link href="/orders">Review orders</Link>
+        </Button>
+      </section>
 
-        <section
-          aria-label="Refund KPI summary"
-          className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-          {kpis.map((kpi) => (
-            <article
-              className="rounded-md border border-slate-200 bg-white p-5 shadow-sm"
-              key={kpi.label}
-            >
-              <p className="text-sm font-medium text-slate-500">{kpi.label}</p>
-              <p className="mt-3 text-3xl font-semibold text-slate-950">
-                {kpi.value}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {kpi.helper}
-              </p>
-            </article>
-          ))}
-        </section>
+      <section
+        aria-label="Dashboard KPI summary"
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
+      >
+        {kpis.map((kpi) => (
+          <KpiCard
+            helper={kpi.helper}
+            key={kpi.label}
+            label={kpi.label}
+            value={kpi.value}
+          />
+        ))}
+      </section>
 
-        <section className="flex flex-col gap-4" aria-labelledby="refund-table">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Revenue and refunds over time</CardTitle>
+            <CardDescription>
+              Weekly gross revenue and succeeded refunds from demo orders.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RevenueRefundChart data={overview.chartData} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Demo data window</CardTitle>
+            <CardDescription>
+              The seeded dataset is deterministic and synthetic.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 text-sm">
             <div>
-              <h2
-                className="text-xl font-semibold text-slate-950"
-                id="refund-table"
-              >
-                Interactive refund operations queue
-              </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                Synthetic refund records shaped for operations review,
-                escalation, search, filtering, sorting, and screenshot-ready
-                portfolio demos.
+              <p className="text-muted-foreground">Orders loaded</p>
+              <p className="mt-1 text-2xl font-semibold tracking-normal">
+                {overview.totalOrderRecords.toLocaleString("en-US")}
               </p>
             </div>
-            <p className="text-sm font-medium text-slate-500">
-              {metrics.openRefunds} open of {metrics.totalRefunds} total
-            </p>
-          </div>
-
-          <RefundOperationsTable refunds={refunds} />
-        </section>
-      </div>
+            <div>
+              <p className="text-muted-foreground">Data through</p>
+              <p className="mt-1 font-medium">
+                {overview.dataThrough
+                  ? formatDate(overview.dataThrough)
+                  : "No orders"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Fulfillment exposure</p>
+              <p className="mt-1 font-medium">
+                {overview.kpis.delayedFulfillmentCount.toLocaleString("en-US")}{" "}
+                delayed demo orders
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Payment risk</p>
+              <p className="mt-1 font-medium">
+                {overview.kpis.failedPaymentCount.toLocaleString("en-US")}{" "}
+                failed demo payments
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
     </main>
   );
 }

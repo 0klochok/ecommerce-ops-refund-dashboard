@@ -2,7 +2,7 @@
 
 ## Testing Policy
 
-The current app has a seeded Phase 1 data foundation and an existing mock-only refund operations dashboard. Tests should protect the implemented domain calculations, dashboard behavior, responsive containment, accessibility-relevant interactions, and local tooling without calling live external services.
+The current app has a seeded Phase 2 Prisma-backed dashboard and orders workflow. Tests should protect pure domain calculations, DTO-independent helper behavior, dashboard/order browser flow, responsive usability, and local tooling without calling live external services.
 
 Test data must be synthetic. Tests must not call live external APIs, paid APIs, Stripe, Shopify, WooCommerce, or real customer/order/payment systems.
 
@@ -10,10 +10,11 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 | Layer | Location | Purpose |
 |---|---|---|
-| Unit/component | `tests/unit/page.test.tsx` | Verifies the dashboard renders KPI content, refund queue controls, selected-detail behavior, accessibility labels, and focus recovery |
-| Unit/domain | `tests/unit/refunds.test.ts` | Verifies mock refund metrics, urgent/high-risk classification, search, filters, sorting, and empty results |
-| Unit/domain | `tests/unit/domain/kpis.test.ts` | Verifies Phase 1 KPI formulas, zero-revenue behavior, canceled-order exclusion, refund status handling, unfulfilled/delayed fulfillment counts, failed payments, and active dispute exposure |
-| E2E/browser | `e2e/home.spec.ts` | Starts or reuses the Next dev server and checks the main dashboard flow, detail-panel behavior, responsive containment, and no page-level horizontal overflow in Chromium |
+| Unit/domain | `tests/unit/domain/kpis.test.ts` | Verifies KPI formulas, zero-revenue behavior, canceled-order exclusion, refund status handling, unfulfilled/delayed fulfillment counts, failed payments, and active dispute exposure |
+| Unit/domain | `tests/unit/domain/dashboard.test.ts` | Verifies weekly revenue/refund chart grouping and exclusion of non-counted records |
+| Unit/domain | `tests/unit/orders/orders.test.ts` | Verifies order search, combined filters, empty results, missing payment mapping, refund summary, and status label/tone helpers |
+| Unit/domain | `tests/unit/refunds.test.ts` | Legacy coverage for retained static refund helper utilities |
+| E2E/browser | `e2e/dashboard.spec.ts` | Starts or reuses the Next dev server and checks the dashboard overview, KPI/chart visibility, orders table, search/filter interaction, and order detail route |
 
 ## Required Gates
 
@@ -21,9 +22,9 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 |---|---|---|
 | Lint | `pnpm lint` | No ESLint errors |
 | Typecheck | `pnpm typecheck` | TypeScript exits successfully |
-| Unit/component tests | `pnpm test` | Vitest exits successfully |
+| Unit tests | `pnpm test` | Vitest exits successfully |
 | Build | `pnpm build` | Next.js production build succeeds |
-| E2E/browser tests | `pnpm e2e` | Playwright Chromium tests pass |
+| E2E/browser tests | `pnpm e2e -- --project=chromium` | Playwright Chromium tests pass |
 
 `pnpm validate` runs lint, typecheck, tests, and build. E2E is intentionally separate because it controls a browser and dev server.
 
@@ -31,13 +32,13 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 Later phases should add focused tests for:
 
-- Order-table pagination
 - CSV import validation and error handling
-- Refund/dispute workflows beyond the current static detail panel
+- Weekly CSV export generation
+- Standalone refunds/disputes workflows
 - Customer detail views and notes
 - Alert rule evaluation
-- Weekly CSV export generation
-- Route-handler and repository tests once the UI/API starts reading Prisma-backed data
+- Route-handler tests once APIs are introduced
+- Repository integration tests if database read/write behavior becomes more complex
 
 ## Skipped Gate Policy
 
