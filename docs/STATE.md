@@ -3,12 +3,64 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-18
-- Phase: Phase 2.5 - production-preview QA and clean demo evidence
-- Overall status: Phase 2.5 production-preview QA completed; standard validation gate passed; no production-preview app defect was found; clean screenshots were captured outside the repo through Playwright fallback after in-app Browser bootstrap failed
-- Quality gate status: green after Phase 2.5 validation and production-preview QA
+- Phase: Phase 2.6 - portfolio documentation prep
+- Overall status: Phase 2.6 documentation prep completed; README, runbook/manual QA, test context, project context, and screenshot naming convention now reflect the current mock-only Phase 2 dashboard
+- Quality gate status: green after Phase 2.6 validation
 - Current branch: `main`
-- Git status: Phase 2.5 documentation update is unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Git status: Phase 2.6 documentation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
 - Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; production-preview QA passed through repo-local Playwright fallback
+
+## Phase 2.6 - Portfolio Documentation Prep - 2026-06-18
+
+### Summary
+
+- Updated portfolio/client-facing documentation to describe the actual current app: a mock-only Phase 2 refund operations dashboard using synthetic data only.
+- Replaced stale Phase 0 README/runbook/test/context wording with current setup, validation, production-preview, manual QA, and future-scope language.
+- Added a durable repo-local screenshot convention under `docs/assets/screenshots/` without adding binary screenshot files.
+- Kept this phase documentation-only: no app behavior, backend, API, database, auth, Stripe, payment, CSV, dependency, redesign, or CI changes were made.
+- Did not rewrite `docs/REQ.md` or `docs/DESIGN.md`; `docs/REQ.md` remains a template and `docs/DESIGN.md` remains a design-reference artifact, both recorded as current documentation limits.
+
+### Files Changed
+
+- `README.md`: current project overview, problem statement, implemented scope, safety policy, stack, install/dev/build/preview/test commands, manual QA links, and adaptation notes for Shopify, WooCommerce, and Stripe-only businesses.
+- `docs/RUNBOOK.md`: current operations runbook plus manual QA checklist for dev smoke, production preview, KPI review, queue interactions, detail panel, empty state, responsive checks, and screenshot readiness.
+- `docs/TDD.md`: current test policy and coverage map for unit/component, domain-helper, and Playwright browser tests.
+- `docs/CONTEXT.md`: current Phase 2 mock-dashboard context, repository map, commands, safety rules, and known open limits.
+- `docs/assets/screenshots/README.md`: production-preview screenshot naming convention and quality rules; no binary screenshots added.
+- `docs/STATE.md`: this Phase 2.6 record, validation results, skipped/deferred notes, and Git safety confirmation.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 2 test files and 17 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed; `/` and `/_not-found` prerendered as static content |
+| E2E | `pnpm e2e` | pass | 5 Playwright Chromium tests passed |
+| Diff whitespace | `git diff --check` | pass | No whitespace errors; Git emitted LF-to-CRLF working-copy warnings for edited Markdown files |
+| Git status | `git status --short` | pass | Docs-only changes: `README.md`, `docs/CONTEXT.md`, `docs/RUNBOOK.md`, `docs/STATE.md`, `docs/TDD.md`, and untracked `docs/assets/` |
+| Diff summary | `git diff --stat` | pass | Tracked Markdown diff summary only; untracked screenshot convention file appears in `git status --short` |
+
+### Manual QA Notes
+
+- No new manual browser QA was required because this phase changed documentation only.
+- Manual verification recommendation remains: use `docs/RUNBOOK.md`, run `pnpm dev` for development smoke, and use production preview for final portfolio screenshot capture.
+- Screenshot capture was intentionally not performed and no binary screenshot files were added.
+
+### Generated Artifacts And Git
+
+- Normal ignored validation/build output may exist from `pnpm build` and `pnpm e2e`, including `.next`, `test-results`, and `playwright-report`; these are not portfolio screenshot artifacts and are not tracked by Git.
+- Final `git status --short` shows only documentation changes plus the new untracked `docs/assets/` screenshot convention folder.
+- Final `git diff --stat` shows tracked Markdown documentation changes only; Git does not include untracked files in that stat.
+- No commits, pushes, tags, staging, branch changes, history rewrites, remote changes, GitHub Actions, dependencies, backend/API/database/auth/Stripe/payment/CSV work, paid APIs, real data, or product redesign were added.
+- Codex did not run `git add`, `git commit`, `git push`, tag commands, history-rewrite commands, branch-deletion commands, or remote-modifying commands.
+
+### Skipped Or Deferred
+
+- No required automated validation gates were skipped.
+- In-app Browser QA remains deferred because the Browser plugin bootstrap is blocked by the Windows sandbox process-launch failure recorded in earlier phases; Playwright E2E passed through the project workflow.
+- `docs/REQ.md` remains a generic requirements template and `docs/DESIGN.md` remains a design-reference artifact; broader requirements/design cleanup is deferred because Phase 2.6 scope was targeted documentation prep.
 
 ## Phase 2.5 - Production-Preview QA And Clean Demo Evidence - 2026-06-18
 

@@ -2,7 +2,7 @@
 
 ## Testing Policy
 
-Phase 0 validates scaffolding and tooling only. Tests should prove the app shell boots and renders a minimal smoke target. Business behavior tests start when dashboard features are implemented.
+The current app is a mock-only Phase 2 refund operations dashboard. Tests should protect the implemented dashboard behavior, responsive containment, accessibility-relevant interactions, and local tooling without calling live external services.
 
 Test data must be synthetic. Tests must not call live external APIs, paid APIs, Stripe, Shopify, WooCommerce, or real customer/order/payment systems.
 
@@ -10,8 +10,9 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 | Layer | Location | Purpose |
 |---|---|---|
-| Unit/smoke | `tests/unit/page.test.tsx` | Verifies the scaffold home page renders Phase 0 copy |
-| E2E smoke | `e2e/home.spec.ts` | Starts the Next dev server and checks the scaffold page in Chromium |
+| Unit/component | `tests/unit/page.test.tsx` | Verifies the dashboard renders KPI content, refund queue controls, selected-detail behavior, accessibility labels, and focus recovery |
+| Unit/domain | `tests/unit/refunds.test.ts` | Verifies mock refund metrics, urgent/high-risk classification, search, filters, sorting, and empty results |
+| E2E/browser | `e2e/home.spec.ts` | Starts or reuses the Next dev server and checks the main dashboard flow, detail-panel behavior, responsive containment, and no page-level horizontal overflow in Chromium |
 
 ## Required Gates
 
@@ -19,9 +20,9 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 |---|---|---|
 | Lint | `pnpm lint` | No ESLint errors |
 | Typecheck | `pnpm typecheck` | TypeScript exits successfully |
-| Unit/smoke tests | `pnpm test` | Vitest exits successfully |
+| Unit/component tests | `pnpm test` | Vitest exits successfully |
 | Build | `pnpm build` | Next.js production build succeeds |
-| E2E smoke | `pnpm e2e` | Playwright scaffold smoke test passes |
+| E2E/browser tests | `pnpm e2e` | Playwright Chromium tests pass |
 
 `pnpm validate` runs lint, typecheck, tests, and build. E2E is intentionally separate because it controls a browser and dev server.
 
@@ -29,14 +30,14 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 Later phases should add focused tests for:
 
-- Dashboard KPI calculations
-- Order filtering, sorting, and pagination
+- Order KPI calculations and order-table pagination
 - CSV import validation and error handling
-- Refund/dispute workflows
+- Refund/dispute workflows beyond the current static detail panel
 - Customer detail views and notes
 - Alert rule evaluation
 - Weekly CSV export generation
 - Mock adapter contracts for Stripe/store data
+- Prisma-backed persistence once business models are introduced
 
 ## Skipped Gate Policy
 
