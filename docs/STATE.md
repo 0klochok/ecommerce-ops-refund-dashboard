@@ -3,12 +3,68 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Phase 3 operational workflow
-- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, tests, and documentation are implemented.
-- Quality gate status: green after Phase 3 validation
+- Phase: Phase 4 Stripe test webhooks and portfolio polish
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, local-validation-based CI, tests, and documentation are implemented.
+- Quality gate status: green after Phase 4 validation
 - Current branch: `main`
-- Git status: Phase 3 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Git status: Phase 4 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
 - Main blocker: none. The project database maps to host port `5433`.
+
+## Phase 4 Stripe Test Webhooks And Portfolio Polish - 2026-06-19
+
+### Summary
+
+- Added `stripe` as a dependency for local webhook signature verification only.
+- Added `POST /api/webhooks/stripe` with raw-body signature verification using `STRIPE_WEBHOOK_SECRET`, safe 400 responses for missing/invalid signatures or malformed signed payloads, and no Stripe API calls.
+- Added Stripe webhook mapping/service/repository code for `charge.refunded`, `payment_intent.payment_failed`, and `charge.dispute.created`.
+- Stored webhook events idempotently through existing `WebhookEvent.providerEventId`; duplicate deliveries return `duplicate: true` and skip duplicate business writes.
+- Mapped supported mock/test events into local `Refund`, `Payment`, and `Dispute` behavior when a matching mock payment exists; unmatched or unsupported valid events are stored and marked `IGNORED`.
+- Refined mock Stripe fixtures with fake `evt_mock_*`, `pi_mock_*`, `ch_mock_*`, `re_mock_*`, and `dp_mock_*` identifiers only.
+- Added unit tests for Stripe event mapping and integration-style webhook tests with local generated Stripe signatures, a fake webhook secret, and an in-memory repository.
+- Added `docs/screenshots-checklist.md`, `docs/demo-video-script.md`, README Phase 4 webhook/adaptation notes, TDD/runbook updates, and `.github/workflows/ci.yml`.
+- No Prisma schema change, migration, real Stripe API call, Stripe CLI command, real Shopify/WooCommerce adapter, real data, secret, auth, production deployment, commit, push, tag, history rewrite, staging, or remote change was performed.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was already running |
+| Install | `pnpm install` | pass | Dependency graph up to date after adding `stripe` |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to ignored `src/generated/prisma` |
+| Prisma seed | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Lint | `pnpm lint` | pass | ESLint completed with no warnings or errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Focused webhook tests | `pnpm test -- tests/unit/stripe tests/integration/webhooks` | pass | 2 test files and 13 tests passed |
+| Unit/integration tests | `pnpm test` | pass | 11 test files and 45 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed and includes `/api/webhooks/stripe` as a dynamic route |
+| E2E | `pnpm e2e -- --project=chromium` | pass | 2 Playwright Chromium tests passed |
+| Git status | `git status --short` | pass | Shows expected unstaged Phase 4 source, test, fixture, dependency, workflow, and documentation changes only |
+
+### Manual Verification
+
+- Recommended manual browser check: run `pnpm dev`, open `http://localhost:3000`, and confirm dashboard/orders/refunds/imports/alerts flows still load.
+- Run `pnpm test -- tests/unit/stripe tests/integration/webhooks` and confirm signed mock webhook coverage passes without Stripe CLI.
+- Confirm README contains `How this would be adapted for Shopify, WooCommerce, or Stripe-only businesses`.
+- Confirm `docs/screenshots-checklist.md` and `docs/demo-video-script.md` exist.
+- If reviewing CI locally, inspect `.github/workflows/ci.yml` and confirm it uses mock/test env only and no secrets.
+
+### Optional Stripe CLI Commands Not Run
+
+Codex did not run these commands because `USER_APPROVED_STRIPE_TEST_CLI=false`. They are optional manual checks for Stripe test mode only:
+
+```powershell
+stripe login
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe trigger charge.refunded
+stripe trigger payment_intent.payment_failed
+stripe trigger charge.dispute.created
+```
+
+### Notes
+
+- No schema migration was required because existing `WebhookEvent`, `Payment`, `Refund`, and `Dispute` models already support provider IDs and webhook idempotency.
+- `WebhookProcessingStatus.IGNORED` is used for unsupported or unmatched valid events because the schema has no processed-with-warning enum.
+- The GitHub Actions workflow was added only after local validation passed. It uses Node 24, Corepack/pnpm, PostgreSQL 17, safe mock Stripe env vars, and no deployment or production secrets.
 
 ## Phase 3 Operational Workflow - 2026-06-19
 

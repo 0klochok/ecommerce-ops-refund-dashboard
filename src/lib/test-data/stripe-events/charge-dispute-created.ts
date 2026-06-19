@@ -1,14 +1,14 @@
 export const mockChargeDisputeCreatedEvent = {
-  api_version: "2026-01-01.mock",
+  api_version: "2026-05-27.dahlia",
   created: 1_781_528_400,
   data: {
     object: {
       amount: 12_900,
-      charge: "ch_mock_disputed_000001",
+      charge: "ch_mock_000003",
       currency: "usd",
-      id: "dp_mock_created_000001",
+      id: "dp_mock_phase4_000001",
       object: "dispute",
-      payment_intent: "pi_mock_disputed_000001",
+      payment_intent: "pi_mock_000003",
       reason: "product_not_received",
       status: "needs_response",
     },

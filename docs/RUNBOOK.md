@@ -57,6 +57,8 @@ Open:
 - `http://localhost:3000/imports`
 - `http://localhost:3000/alerts`
 
+The mock/test Stripe webhook endpoint is available at `http://localhost:3000/api/webhooks/stripe`. It requires a valid `stripe-signature` header and `STRIPE_WEBHOOK_SECRET`; automated tests use a fake test secret only.
+
 ## Production Preview
 
 ```powershell
@@ -81,6 +83,20 @@ pnpm validate
 
 `pnpm validate` runs lint, typecheck, tests, and build. Run E2E separately when browser validation is needed.
 
+## Optional Stripe CLI Smoke
+
+Codex does not run these commands unless explicitly approved. Use only Stripe test mode and never use production credentials:
+
+```powershell
+stripe login
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe trigger charge.refunded
+stripe trigger payment_intent.payment_failed
+stripe trigger charge.dispute.created
+```
+
+The app does not call Stripe APIs. The Stripe SDK is used locally to verify webhook signatures.
+
 ## Manual QA Checklist
 
 Use synthetic demo data only. Do not enter or capture real customer, order, payment, refund, Stripe, Shopify, or WooCommerce data.
@@ -104,6 +120,7 @@ Use synthetic demo data only. Do not enter or capture real customer, order, paym
 - [ ] Import visibility: search `/orders` for an imported order number and confirm it appears.
 - [ ] Alerts: open `http://localhost:3000/alerts`, run Recalculate alerts, and confirm a second recalculation does not create duplicate alerts for the same conditions.
 - [ ] Weekly export: use the dashboard `Download weekly ops CSV` button and confirm a `.csv` file downloads.
+- [ ] Webhook tests: run `pnpm test -- tests/unit/stripe tests/integration/webhooks` and confirm signed mock Stripe webhook tests pass without Stripe CLI.
 - [ ] Not found: open an invalid `/orders/not-a-real-order` URL and confirm the route-specific not-found state links back to orders.
 - [ ] Production preview smoke: run `pnpm build`, then `pnpm exec next start -p 3000 -H 127.0.0.1`, and confirm `/` and `/orders` load without the Next.js dev indicator.
 - [ ] Screenshot readiness: capture only from production preview and save final images under `docs/assets/screenshots/` using the convention documented there.

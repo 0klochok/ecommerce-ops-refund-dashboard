@@ -20,10 +20,13 @@ Small e-commerce teams need a quick way to understand revenue, refund exposure, 
 - CSV order import workflow at `/imports` and `POST /api/imports/orders`.
 - Weekly operations CSV export at `GET /api/reports/weekly-ops?weekStart=YYYY-MM-DD`.
 - Alert list and recalculation workflow at `/alerts` and `POST /api/alerts/recalculate`.
+- Mock/test-only Stripe webhook endpoint at `POST /api/webhooks/stripe` with local signature verification, idempotent event storage, and safe mapping for refund, failed-payment, and dispute test events.
 - Automated Vitest coverage for domain calculations, CSV validation/escaping, alert evaluation, order helpers, and import/alert service flows.
 - Playwright Chromium coverage for the main dashboard, orders flow, import workflow, alert recalculation, and weekly CSV download.
+- Portfolio screenshot checklist and demo video script for a business-value walkthrough.
+- Local-validation-based GitHub Actions CI for lint, typecheck, Vitest, build, and Playwright Chromium against seeded PostgreSQL.
 
-Phase 3 intentionally does not implement real Stripe webhook behavior, Stripe CLI workflows, real Shopify/WooCommerce adapters, auth, GitHub Actions, production deployment, screenshot polish, or demo video work.
+Phase 4 intentionally does not implement real production Stripe API calls, real Shopify/WooCommerce adapters, auth, production deployment, or live payment data workflows.
 
 ## Data And Integration Safety
 
@@ -32,6 +35,7 @@ Phase 3 intentionally does not implement real Stripe webhook behavior, Stripe CL
 - Do not use real Stripe, Shopify, WooCommerce, customer, order, payment, or refund data.
 - External integrations default to mock/no-paid-API mode.
 - Stripe test webhooks require explicit approval before use.
+- The app does not make live Stripe API calls; the Stripe SDK is used only for local webhook signature verification.
 - `.env.local` stays untracked. `.env.example` contains safe placeholders only.
 - No paid APIs are required for local development or validation.
 
@@ -43,7 +47,8 @@ Phase 3 intentionally does not implement real Stripe webhook behavior, Stripe CL
 - shadcn/ui using the Radix Nova preset and Lucide icons
 - Recharts for the overview chart
 - TanStack Table for the orders table
-- Next.js Route Handlers reserved for future backend endpoints
+- Next.js Route Handlers for imports, exports, alert recalculation, and mock/test Stripe webhooks
+- Stripe SDK for local webhook signature verification only
 - Prisma 7 with local PostgreSQL through Docker Compose
 - Vitest, Testing Library, and jsdom for unit tests
 - Playwright Chromium for browser/E2E tests
@@ -173,6 +178,30 @@ Open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sampl
 
 Mock Stripe-style event fixtures live under `src/lib/test-data/stripe-events/` and contain fake `evt_mock_`, `pi_mock_`, `re_mock_`, and `dp_mock_` identifiers only. The mock store adapter under `src/lib/store-adapters/` defines the contract future Shopify, WooCommerce, Stripe-only, or CSV adapters can implement without adding real network calls or credentials.
 
+## Phase 4 Stripe Test Webhooks
+
+`POST /api/webhooks/stripe` accepts signed Stripe-format webhook payloads in mock/test mode only. The route reads the raw request body, requires `STRIPE_WEBHOOK_SECRET`, verifies the `stripe-signature` header locally with the Stripe SDK, and never calls Stripe APIs.
+
+Supported test event mappings:
+
+- `charge.refunded`: stores the webhook, matches the payment intent to a local mock payment when possible, upserts a refund by provider refund ID, updates refund/payment/order status, and recalculates alerts.
+- `payment_intent.payment_failed`: stores the webhook, matches the payment intent to a local mock payment when possible, marks the payment/order failed, and recalculates alerts.
+- `charge.dispute.created`: stores the webhook, matches the payment intent to a local mock payment when possible, upserts a dispute by provider dispute ID, and marks the payment/order disputed.
+
+Idempotency uses the existing `WebhookEvent.providerEventId` unique key. A repeated valid delivery of the same Stripe event returns `duplicate: true` and skips duplicate refund, dispute, or payment writes. Unknown valid event types are stored safely and marked ignored.
+
+Local automated tests use `whsec_mock_test_secret` only inside test setup. They generate deterministic signed requests with Stripe's local test-header helper and do not require Stripe CLI, Stripe login, real credentials, or network calls.
+
+Optional Stripe CLI test-mode commands were not run by Codex. Run them manually only with Stripe test mode and explicit local approval:
+
+```powershell
+stripe login
+stripe listen --forward-to localhost:3000/api/webhooks/stripe
+stripe trigger charge.refunded
+stripe trigger payment_intent.payment_failed
+stripe trigger charge.dispute.created
+```
+
 ## Build
 
 ```powershell
@@ -218,10 +247,10 @@ pnpm validate
 - Screenshot naming convention: `docs/assets/screenshots/README.md`
 - Phase history and validation record: `docs/STATE.md`
 
-## Adapting The Concept
+## How this would be adapted for Shopify, WooCommerce, or Stripe-only businesses
 
-- Shopify store: map Shopify orders, fulfillments, returns, and customer tags into the same operations queue shape.
-- WooCommerce store: map WooCommerce order/refund status, payment gateway metadata, and fulfillment plugins into the queue and KPI layer.
-- Stripe-only business: use Stripe payment intents, charges, refunds, disputes, and webhook events as the primary source, with store/customer context added only when available.
+- Shopify: replace the mock store adapter with Shopify Admin API order, fulfillment, customer, return, and refund sync. Stripe-style payment events could remain an optional enrichment layer when the store uses Stripe-based payments.
+- WooCommerce: replace the mock adapter with WooCommerce REST API order, refund, customer, and payment-gateway metadata sync while keeping the same dashboard, alert, and export shapes.
+- Stripe-only: treat Stripe as the payment, refund, dispute, and webhook source of truth, then import order metadata from CSV or an internal system when Stripe metadata is not enough for operations context.
 
-All variants should keep the same safety rule for this repository: synthetic data by default, mock adapters first, and no real production customer or payment records.
+This repository is not production-ready. All variants should keep the same portfolio safety rule here: synthetic data by default, mock adapters first, and no real production customer or payment records.

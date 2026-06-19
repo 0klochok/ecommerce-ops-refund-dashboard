@@ -1,12 +1,12 @@
 export const mockPaymentIntentPaymentFailedEvent = {
-  api_version: "2026-01-01.mock",
+  api_version: "2026-05-27.dahlia",
   created: 1_781_521_200,
   data: {
     object: {
       amount: 7_599,
       currency: "usd",
       customer: "cus_mock_failed_000001",
-      id: "pi_mock_failed_000001",
+      id: "pi_mock_000002",
       last_payment_error: {
         code: "card_declined",
         decline_code: "insufficient_funds",
