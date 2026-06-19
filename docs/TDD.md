@@ -14,8 +14,8 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 | Unit/domain | `tests/unit/domain/dashboard.test.ts` | Verifies weekly revenue/refund chart grouping and exclusion of non-counted records |
 | Unit/domain | `tests/unit/orders/orders.test.ts` | Verifies order search, combined filters, empty results, missing payment mapping, refund summary, and status label/tone helpers |
 | Unit/domain | `tests/unit/refunds.test.ts` | Legacy coverage for retained static refund helper utilities |
-| Unit/CSV | `tests/unit/csv/orders-import.test.ts` | Verifies valid and invalid order import fixtures with row-level errors |
-| Unit/CSV | `tests/unit/csv/weekly-ops-report.test.ts` | Verifies weekly operations CSV escaping for commas, quotes, and newlines |
+| Unit/CSV | `tests/unit/csv/orders-import.test.ts` | Verifies valid and invalid order import fixtures, row-level errors, and impossible calendar-date rejection |
+| Unit/CSV | `tests/unit/csv/weekly-ops-report.test.ts` | Verifies weekly operations CSV escaping for commas, quotes, and newlines, plus strict `weekStart` calendar-date validation |
 | Unit/alerts | `tests/unit/alerts/alerts.test.ts` | Verifies delayed fulfillment, high refund, repeated failed payment, and alert dedupe logic |
 | Integration-style | `tests/integration/imports/order-import-service.test.ts` | Verifies the CSV import service with a fake repository and fixture data |
 | Integration-style | `tests/integration/alerts/alert-evaluation-service.test.ts` | Verifies alert evaluation with a fake repository and existing-alert skip behavior |

@@ -1,8 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildWeeklyOpsReportCsv,
   escapeCsvField,
 } from "@/lib/csv/weekly-ops-report";
+import { weeklyOpsReportQuerySchema } from "@/server/services/weekly-ops-report-service";
+
+vi.mock("@/server/repositories/reports", () => ({
+  readWeeklyOpsReportRecords: vi.fn(),
+}));
 
 describe("weekly ops CSV escaping", () => {
   it("escapes commas, quotes, and newlines safely", () => {
@@ -29,3 +34,12 @@ describe("weekly ops CSV escaping", () => {
   });
 });
 
+describe("weekly ops report query validation", () => {
+  it("rejects impossible calendar dates instead of rolling them forward", () => {
+    const result = weeklyOpsReportQuerySchema.safeParse({
+      weekStart: "2026-02-31",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});

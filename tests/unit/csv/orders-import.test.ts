@@ -50,5 +50,20 @@ describe("validateOrderImportCsv", () => {
       ]),
     );
   });
-});
 
+  it("rejects impossible calendar dates instead of rolling them forward", () => {
+    const result = validateOrderImportCsv(`orderNumber,customerEmail,customerName,orderDate,productType,sku,itemName,quantity,unitAmountCents,fulfillmentStatus,paymentStatus,storeSource
+ORD-BAD-DATE,demo.bad.date@example.test,Bad Date,2026-02-31,PHYSICAL,PHY-BAD-DATE,Bad date,1,2599,UNFULFILLED,SUCCEEDED,CSV_IMPORT
+`);
+
+    expect(result.validRows).toEqual([]);
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          field: "orderDate",
+          rowNumber: 2,
+        }),
+      ]),
+    );
+  });
+});

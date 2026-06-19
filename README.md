@@ -142,12 +142,14 @@ orderNumber, customerEmail, customerName, orderDate, productType, sku, itemName,
 
 CSV rows are item rows. Multiple rows can share one `orderNumber` to create one order with multiple line items, but existing order numbers are rejected and never overwritten. Valid imports create demo customers, orders, order items, mock payments, fulfillment events, and an import batch summary. Invalid rows return row-level errors.
 
+`orderDate` must be a real calendar date in `YYYY-MM-DD` or ISO format. Impossible dates such as `2026-02-31` are rejected instead of being rolled forward by JavaScript date parsing.
+
 Sample fixtures:
 
 - `tests/fixtures/orders-import-sample.csv`
 - `tests/fixtures/orders-import-invalid.csv`
 
-The weekly operations export is available from the dashboard button or directly:
+The weekly operations export is available from the dashboard button or directly. `weekStart` must be a real `YYYY-MM-DD` calendar date:
 
 ```powershell
 Invoke-WebRequest "http://localhost:3000/api/reports/weekly-ops?weekStart=2026-06-15" -OutFile weekly-ops-2026-06-15.csv

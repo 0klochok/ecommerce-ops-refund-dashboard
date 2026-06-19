@@ -199,8 +199,23 @@ function normalizeEnumValue(value: unknown) {
 }
 
 function parseUtcDate(value: string) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    const date = new Date(`${value}T00:00:00.000Z`);
+  const dateOnlyMatch = /^(\d{4}-\d{2}-\d{2})(?:$|T)/.exec(value);
+
+  if (dateOnlyMatch) {
+    const datePart = dateOnlyMatch[1];
+    const dateOnly = new Date(`${datePart}T00:00:00.000Z`);
+
+    if (
+      Number.isNaN(dateOnly.getTime()) ||
+      dateOnly.toISOString().slice(0, 10) !== datePart
+    ) {
+      return null;
+    }
+
+    const date =
+      value.length === datePart.length
+        ? dateOnly
+        : new Date(value);
 
     return Number.isNaN(date.getTime()) ? null : date;
   }
@@ -209,4 +224,3 @@ function parseUtcDate(value: string) {
 
   return Number.isNaN(date.getTime()) ? null : date;
 }
-

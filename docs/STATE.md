@@ -3,12 +3,89 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Phase 4 Stripe test webhooks and portfolio polish
+- Phase: Final portfolio/demo hardening
 - Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, local-validation-based CI, tests, and documentation are implemented.
-- Quality gate status: green after Phase 4 validation
+- Quality gate status: green after final hardening validation
 - Current branch: `main`
-- Git status: Phase 4 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Git status: Final hardening changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, deleted branches, or changed remotes
 - Main blocker: none. The project database maps to host port `5433`.
+
+## Final Portfolio/Demo Hardening - 2026-06-19
+
+### Phase Objective
+
+Perform final portfolio/demo hardening without adding major product features. Audit the existing dashboard, orders, refunds/disputes, customer detail, CSV import, weekly export, alerts, and mock Stripe webhook surfaces; fix only small defects, stale docs, and validation issues; then prove the app locally with the required gates and browser QA.
+
+### Summary
+
+- Audited the required app routes, route handlers, service boundaries, tests, README, runbook, TDD notes, screenshot checklist, demo video script, Prisma schema, package scripts, existing CI file, and git status.
+- Fixed strict calendar-date validation for CSV order imports and weekly operations exports so impossible dates such as `2026-02-31` are rejected instead of being rolled forward by JavaScript date parsing.
+- Added focused Vitest regression coverage for impossible import `orderDate` values and impossible weekly export `weekStart` values.
+- Updated README, runbook, and TDD documentation to reflect the stricter date validation and current test coverage.
+- Confirmed `.github/workflows/ci.yml` already exists and inspected it only; no CI scope was expanded.
+- Reviewed `docs/screenshots-checklist.md` and `docs/demo-video-script.md`; both remain consistent with the implemented app, so no changes were needed there.
+- Scanned tracked project text, excluding ignored build/dependency/local env output, for common live secret and real-data indicators. Matches were safety/disclaimer documentation only.
+- No dependency, schema, migration, major feature, real integration, paid API, real data, Stripe CLI command, commit, push, tag, staging, history rewrite, branch deletion, or remote change was performed.
+
+### Files Changed
+
+- `README.md`: clarified real calendar-date requirements for CSV imports and weekly export `weekStart`.
+- `docs/RUNBOOK.md`: added a manual QA reminder for impossible date rejection with synthetic CSV data.
+- `docs/TDD.md`: updated CSV/report coverage notes for strict calendar-date validation.
+- `docs/STATE.md`: recorded this hardening phase, validation, manual QA, skipped checks, limitations, and next step.
+- `src/lib/validation/order-import.ts`: rejects impossible date-only or ISO date portions before accepting imported `orderDate`.
+- `src/server/services/weekly-ops-report-service.ts`: rejects impossible `weekStart` date-only query values.
+- `tests/unit/csv/orders-import.test.ts`: added regression coverage for impossible `orderDate` values.
+- `tests/unit/csv/weekly-ops-report.test.ts`: added regression coverage for impossible `weekStart` values with the report repository mocked for unit isolation.
+
+### Validation
+
+| Gate | Command | Status | Exact result |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was running |
+| Install | `pnpm install` | pass | Already up to date; completed in 913ms with pnpm 11.7.0 |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to `src/generated/prisma` |
+| Prisma seed | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Focused CSV regression tests | `pnpm test -- tests/unit/csv` | pass | 2 test files and 5 tests passed |
+| Lint | `pnpm lint` | pass | `eslint .` completed with no reported errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/integration tests | `pnpm test` | pass | 11 test files and 47 tests passed |
+| Build | `pnpm build` | pass | Next.js 16.2.9 production build compiled successfully and listed `/`, `/orders`, `/orders/[orderId]`, `/refunds`, `/customers/[customerId]`, `/imports`, `/alerts`, `/api/imports/orders`, `/api/reports/weekly-ops`, `/api/alerts/recalculate`, and `/api/webhooks/stripe` |
+| E2E | `pnpm e2e -- --project=chromium` | pass | 2 Playwright Chromium tests passed |
+
+### Manual QA Checklist And Results
+
+- Browser path: in-app Browser plugin bootstrap failed with Windows sandbox process-launch error `CreateProcessAsUserW failed: 5`; project-local Playwright was used as the browser QA fallback.
+- Started `pnpm dev` through the QA script because nothing was serving `http://localhost:3000`; stopped only that started dev-server process after QA.
+- `/`: pass. Dashboard heading, gross revenue KPI, revenue/refund chart, and no runtime overlay were verified.
+- Dashboard KPIs/charts: pass. Seeded KPI/card/chart content was visible.
+- Weekly CSV export: pass. Dashboard export downloaded `weekly-ops-2026-06-15.csv`.
+- `/orders`: pass. Orders queue loaded, search for `ORD-DEMO-00017` worked, and the order detail route showed payment/refund/dispute records.
+- Customer detail flow: pass. Navigated from the order detail to a customer profile and added a synthetic local note; success copy appeared.
+- `/refunds`: pass. Refund operations heading, completed refunds KPI, and disputes section were visible.
+- CSV import flow: pass. Uploaded `tests/fixtures/orders-import-sample.csv`, saw `Import completed`, and confirmed `ORD-IMPORT-1001` appeared in `/orders`.
+- `/alerts`: pass. Alerts page loaded and recalculation returned visible summary text.
+- Mock webhook tests: pass through `pnpm test`; signed webhook coverage remains in `tests/integration/webhooks/stripe-webhook-service.test.ts`.
+- Console health: pass. No relevant browser console warnings/errors were observed during normal QA.
+- External calls: pass. No non-local HTTP(S) requests were observed during browser QA.
+- No real external payment/API calls occurred; all QA data was seeded or synthetic fixture data.
+
+### Skipped Checks And Reasons
+
+- No required validation command was skipped.
+- Stripe CLI smoke commands were not run because this hardening phase did not require them and `USER_APPROVED_STRIPE_TEST_CLI=true` was not provided.
+- In-app Browser QA was attempted but blocked by the Windows sandbox process-launch error noted above; Playwright fallback completed the requested browser QA.
+
+### Known Limitations
+
+- The app remains a portfolio/demo project using local auth-free seeded data. It is not production-ready.
+- Stripe support remains mock/test webhook handling with local signature verification only; no live Stripe API calls or production payment flows are implemented.
+- Shopify, WooCommerce, and Stripe-only adapters remain documented adaptation paths, not live integrations.
+- Manual QA intentionally mutated the local demo database by adding one synthetic note and importing the sample CSV; rerun `pnpm db:seed` to restore the deterministic baseline.
+
+### Recommended Next Step
+
+Capture final production-preview screenshots and record the demo video using `docs/screenshots-checklist.md` and `docs/demo-video-script.md`. Use `pnpm build` followed by `pnpm exec next start -p 3000 -H 127.0.0.1` so the Next.js dev indicator is not visible.
 
 ## Phase 4 Stripe Test Webhooks And Portfolio Polish - 2026-06-19
 

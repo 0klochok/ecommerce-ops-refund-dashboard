@@ -117,6 +117,7 @@ Use synthetic demo data only. Do not enter or capture real customer, order, paym
 - [ ] Customer detail: open a customer link from orders or refunds, confirm profile metrics, orders, refunds/disputes, and notes render.
 - [ ] Customer notes: add a synthetic note only, confirm it appears on the customer detail page, and do not enter real customer data.
 - [ ] CSV import: open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sample.csv`, and confirm the import summary reports created orders.
+- [ ] CSV import validation: use only synthetic rows and valid calendar dates; impossible dates such as `2026-02-31` should be rejected.
 - [ ] Import visibility: search `/orders` for an imported order number and confirm it appears.
 - [ ] Alerts: open `http://localhost:3000/alerts`, run Recalculate alerts, and confirm a second recalculation does not create duplicate alerts for the same conditions.
 - [ ] Weekly export: use the dashboard `Download weekly ops CSV` button and confirm a `.csv` file downloads.

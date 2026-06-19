@@ -11,7 +11,7 @@ export const weeklyOpsReportQuerySchema = z.object({
   weekStart: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "weekStart must use YYYY-MM-DD format.")
-    .refine((value) => !Number.isNaN(new Date(`${value}T00:00:00.000Z`).getTime()), {
+    .refine((value) => isValidUtcDateOnly(value), {
       message: "weekStart must be a valid date.",
     }),
 });
@@ -89,4 +89,10 @@ export async function getWeeklyOpsReportCsv(weekStartValue: string) {
 
 function getCustomerName(customer: { firstName: string; lastName: string }) {
   return `${customer.firstName} ${customer.lastName}`;
+}
+
+function isValidUtcDateOnly(value: string) {
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
