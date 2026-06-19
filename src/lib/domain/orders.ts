@@ -46,6 +46,7 @@ export type StatusTone = "danger" | "info" | "neutral" | "success" | "warning";
 export type OrderTableRow = {
   currency: string;
   customerEmail: string;
+  customerId?: string;
   customerName: string;
   fulfillmentStatus: FulfillmentStatusValue;
   id: string;

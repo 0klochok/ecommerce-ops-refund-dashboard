@@ -65,9 +65,19 @@ export default async function DashboardPage() {
             demo data only.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href="/orders">Review orders</Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/orders">Review orders</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <a
+              download
+              href={`/api/reports/weekly-ops?weekStart=${overview.latestReportWeekStart}`}
+            >
+              Download weekly ops CSV
+            </a>
+          </Button>
+        </div>
       </section>
 
       <section

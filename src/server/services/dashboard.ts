@@ -1,5 +1,6 @@
 import {
   getWeeklyRevenueRefundChartData,
+  getUtcWeekStartIso,
   type RevenueRefundChartPoint,
 } from "@/lib/domain/dashboard";
 import {
@@ -26,6 +27,7 @@ export type DashboardOverview = {
   dataThrough: string | null;
   generatedAt: string;
   kpis: DashboardKpis;
+  latestReportWeekStart: string;
   totalOrderRecords: number;
 };
 
@@ -71,12 +73,14 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
     }),
   );
 
+  const latestOrderDate = getLatestOrderDate(records.orders);
+
   return {
     chartData: getWeeklyRevenueRefundChartData({
       orders,
       refunds,
     }),
-    dataThrough: getLatestOrderDate(records.orders),
+    dataThrough: latestOrderDate,
     generatedAt: new Date().toISOString(),
     kpis: calculateDashboardKpis({
       disputes,
@@ -85,6 +89,9 @@ export async function getDashboardOverview(): Promise<DashboardOverview> {
       referenceDate: DEMO_REFERENCE_DATE,
       refunds,
     }),
+    latestReportWeekStart: latestOrderDate
+      ? getUtcWeekStartIso(latestOrderDate)
+      : getUtcWeekStartIso(DEMO_REFERENCE_DATE),
     totalOrderRecords: records.orders.length,
   };
 }

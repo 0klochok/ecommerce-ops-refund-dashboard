@@ -15,10 +15,15 @@ Small e-commerce teams need a quick way to understand revenue, refund exposure, 
 - Prisma-backed dashboard overview at `/` with KPI cards and a weekly revenue/refund chart.
 - Prisma-backed orders workflow at `/orders` with client-side search, filters, sorting, pagination, status badges, and detail links.
 - Order detail route at `/orders/[orderId]` with order, customer, line item, payment, refund, dispute, and fulfillment context.
-- Automated Vitest coverage for domain calculations and order helpers.
-- Playwright Chromium smoke coverage for the main dashboard and orders flow.
+- Refunds and disputes route at `/refunds` backed by seeded mock provider records.
+- Customer detail route at `/customers/[customerId]` with orders, refunds, disputes, notes, and a demo-safe note form.
+- CSV order import workflow at `/imports` and `POST /api/imports/orders`.
+- Weekly operations CSV export at `GET /api/reports/weekly-ops?weekStart=YYYY-MM-DD`.
+- Alert list and recalculation workflow at `/alerts` and `POST /api/alerts/recalculate`.
+- Automated Vitest coverage for domain calculations, CSV validation/escaping, alert evaluation, order helpers, and import/alert service flows.
+- Playwright Chromium coverage for the main dashboard, orders flow, import workflow, alert recalculation, and weekly CSV download.
 
-Phase 2 intentionally does not implement CSV import/export UI, standalone refunds/disputes pages, customer detail pages, alert management pages, Stripe webhook handling, auth, GitHub Actions, or real store/payment adapters.
+Phase 3 intentionally does not implement real Stripe webhook behavior, Stripe CLI workflows, real Shopify/WooCommerce adapters, auth, GitHub Actions, production deployment, screenshot polish, or demo video work.
 
 ## Data And Integration Safety
 
@@ -98,6 +103,9 @@ Open:
 
 - `http://localhost:3000`
 - `http://localhost:3000/orders`
+- `http://localhost:3000/refunds`
+- `http://localhost:3000/imports`
+- `http://localhost:3000/alerts`
 
 ## KPI Formulas
 
@@ -114,6 +122,52 @@ Open:
 ## Orders Workflow
 
 The `/orders` route demonstrates an internal operations queue for reviewing order health across customer identity, source, fulfillment state, payment status, refund exposure, and order value. The detail route shows the context an operations user would need before escalating a delayed fulfillment, payment failure, refund, or dispute.
+
+## Phase 3 Operational Workflows
+
+The `/refunds` route shows completed refund amount, refund count, disputed amount, open disputes, a refunds table, and a disputes table using seeded local database records only.
+
+The `/customers/[customerId]` route shows a synthetic customer profile, lifetime revenue/refund metrics, customer orders, refunds, disputes, seeded notes, and a local-only note form. Notes are validated with Zod and saved to the local database as `Ops demo agent`.
+
+The `/imports` route uploads order CSV files to `POST /api/imports/orders`. Required columns:
+
+```text
+orderNumber, customerEmail, customerName, orderDate, productType, sku, itemName, quantity, unitAmountCents, fulfillmentStatus, paymentStatus, storeSource
+```
+
+CSV rows are item rows. Multiple rows can share one `orderNumber` to create one order with multiple line items, but existing order numbers are rejected and never overwritten. Valid imports create demo customers, orders, order items, mock payments, fulfillment events, and an import batch summary. Invalid rows return row-level errors.
+
+Sample fixtures:
+
+- `tests/fixtures/orders-import-sample.csv`
+- `tests/fixtures/orders-import-invalid.csv`
+
+The weekly operations export is available from the dashboard button or directly:
+
+```powershell
+Invoke-WebRequest "http://localhost:3000/api/reports/weekly-ops?weekStart=2026-06-15" -OutFile weekly-ops-2026-06-15.csv
+```
+
+The export returns `text/csv` with rows for orders, refunds, disputes, fulfillment delays, and open alerts. CSV fields are escaped for commas, quotes, and newlines.
+
+The `/alerts` route lists generated alerts and can recalculate them. Seeded alert rules drive thresholds:
+
+- Delayed fulfillment: physical unfulfilled orders older than 72 hours.
+- High refund amount: succeeded refunds at or above 10,000 cents.
+- Repeated failed payments: customers with at least 2 failed mock payments.
+
+Alert generation is idempotent by matching the rule and related order, refund, or customer before creating a new alert.
+
+To run the import/export flow locally:
+
+```powershell
+docker compose up -d db
+pnpm db:generate
+pnpm db:seed
+pnpm dev
+```
+
+Open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sample.csv`, confirm the imported order appears in `/orders`, open `/alerts` and recalculate alerts, then use the dashboard weekly export button.
 
 ## Mock Integrations
 

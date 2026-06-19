@@ -1,0 +1,4 @@
+orderNumber,customerEmail,customerName,orderDate,productType,sku,itemName,quantity,unitAmountCents,fulfillmentStatus,paymentStatus,storeSource
+ORD-IMPORT-1001,demo.import.001@example.test,Avery Import,2026-06-14,PHYSICAL,PHY-DEMO-MUG,"Demo Mug, 16oz",2,2599,UNFULFILLED,SUCCEEDED,CSV_IMPORT
+ORD-IMPORT-1001,demo.import.001@example.test,Avery Import,2026-06-14,DIGITAL,DIG-DEMO-GUIDE,"Demo setup guide",1,1299,UNFULFILLED,SUCCEEDED,CSV_IMPORT
+ORD-IMPORT-1002,demo.import.002@example.test,Blake Import,2026-06-15,DIGITAL,DIG-DEMO-PLAN,"Planning template",1,1999,NOT_REQUIRED,SUCCEEDED,CSV_IMPORT

@@ -21,6 +21,7 @@ export type OrderDetailDto = {
     city: string | null;
     country: string;
     email: string;
+    id: string;
     lifetimeValueCents: number;
     name: string;
     phone: string | null;
@@ -114,6 +115,7 @@ export async function getOrderTableRows(): Promise<OrderTableRow[]> {
     return {
       currency: order.currency,
       customerEmail: order.customer.email,
+      customerId: order.customer.id,
       customerName: getCustomerName(order.customer),
       fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatusValue,
       id: order.id,
@@ -159,6 +161,7 @@ export async function getOrderDetail(
       city: order.customer.city,
       country: order.customer.country,
       email: order.customer.email,
+      id: order.customer.id,
       lifetimeValueCents: order.customer.lifetimeValueCents,
       name: getCustomerName(order.customer),
       phone: order.customer.phone,

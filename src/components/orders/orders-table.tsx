@@ -104,7 +104,16 @@ export function OrdersTable({ rows }: OrdersTableProps) {
         accessorKey: "customerName",
         cell: ({ row }) => (
           <div className="flex min-w-48 flex-col gap-1">
-            <span className="font-medium">{row.original.customerName}</span>
+            {row.original.customerId ? (
+              <Link
+                className="font-medium underline-offset-4 hover:underline"
+                href={`/customers/${row.original.customerId}`}
+              >
+                {row.original.customerName}
+              </Link>
+            ) : (
+              <span className="font-medium">{row.original.customerName}</span>
+            )}
             <span className="text-xs text-muted-foreground">
               {row.original.customerEmail}
             </span>

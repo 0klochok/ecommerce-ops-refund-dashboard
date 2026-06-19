@@ -3,12 +3,55 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Phase 2 dashboard overview and orders workflow
-- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, tests, and documentation are implemented.
-- Quality gate status: green after Phase 2 validation
+- Phase: Phase 3 operational workflow
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, tests, and documentation are implemented.
+- Quality gate status: green after Phase 3 validation
 - Current branch: `main`
-- Git status: Phase 2 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Git status: Phase 3 implementation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
 - Main blocker: none. The project database maps to host port `5433`.
+
+## Phase 3 Operational Workflow - 2026-06-19
+
+### Summary
+
+- Added Prisma-backed `/refunds` with refund/dispute summary cards, refunds table, disputes table, status badges, and order/customer links.
+- Added `/customers/[customerId]` with profile metrics, orders, refunds/disputes, notes, a route-specific not-found state, and a Zod-validated demo note form.
+- Added `/imports` plus `POST /api/imports/orders` for local CSV order uploads, row-level validation, import batches, demo customer/order/item/payment/fulfillment creation, duplicate order rejection, and alert recalculation after successful imports.
+- Added `GET /api/reports/weekly-ops?weekStart=YYYY-MM-DD` and a dashboard download button for weekly operations CSV exports covering orders, refunds, disputes, fulfillment delays, and open alerts.
+- Added `/alerts` plus `POST /api/alerts/recalculate` for idempotent delayed fulfillment, high refund amount, and repeated failed payment alert generation.
+- Added CSV fixtures, unit tests for CSV and alert domain logic, fake-repository integration-style tests for import and alert services, and a Playwright operational workflow test.
+- Updated README, context, runbook, and test documentation for Phase 3.
+- No Prisma schema change, migration, dependency addition, real external integration, real Stripe call, real Shopify/WooCommerce call, real data, secret, auth, GitHub Actions, production deployment, commit, push, tag, history rewrite, staging, or remote change was performed.
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was running |
+| Install | `pnpm install` | pass | Already up to date |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to ignored `src/generated/prisma` |
+| Prisma seed | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Lint | `pnpm lint` | pass | ESLint completed with no warnings or errors after removing an unused type import |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/integration tests | `pnpm test` | pass | 9 test files and 32 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed and listed `/`, `/orders`, `/orders/[orderId]`, `/refunds`, `/customers/[customerId]`, `/imports`, `/alerts`, and the new API routes as dynamic |
+| E2E | `pnpm e2e -- --project=chromium` | pass after test selector fix | Final run passed 2 Playwright Chromium tests; earlier run exposed an ambiguous Dashboard link selector in the new test, which was fixed |
+| Git status | `git status --short` | pass | Shows expected unstaged Phase 3 source, test, fixture, and documentation changes only |
+
+### Manual Verification
+
+- Recommended manual browser check: run `pnpm dev`, open `http://localhost:3000/refunds`, and confirm refund/dispute summaries and links render.
+- Open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sample.csv`, and confirm import summary values and row-level errors for invalid files.
+- Search `/orders` for imported order numbers and confirm imported records are visible.
+- Open `http://localhost:3000/alerts`, run Recalculate alerts twice, and confirm the second run does not create duplicates for the same underlying conditions.
+- Use the dashboard `Download weekly ops CSV` button and confirm a CSV file downloads.
+- Open a customer detail page from an order/refund/customer link and confirm orders, refunds/disputes, notes, and demo note creation.
+
+### Notes
+
+- The Playwright operational test writes a unique temporary CSV per run and imports those demo rows into the local database after seed.
+- The Phase 3 workflow remains mock/no-paid-API only and uses seeded or uploaded synthetic data.
+- The retained static refund mock helper and tests remain available but are not the routed Phase 3 refunds/disputes workflow.
 
 ## Phase 2 Dashboard Overview And Orders Workflow - 2026-06-19
 

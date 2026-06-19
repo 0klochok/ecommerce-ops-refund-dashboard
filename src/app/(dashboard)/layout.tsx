@@ -1,4 +1,10 @@
-import { BarChart3Icon, ShoppingCartIcon } from "lucide-react";
+import {
+  BarChart3Icon,
+  BellIcon,
+  RefreshCcwIcon,
+  ShoppingCartIcon,
+  UploadIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -19,11 +25,14 @@ export default function DashboardLayout({
               E-commerce Ops Refund Dashboard
             </span>
           </Link>
-          <nav aria-label="Dashboard navigation" className="flex gap-2">
+          <nav
+            aria-label="Dashboard navigation"
+            className="flex flex-wrap gap-2"
+          >
             <Button asChild variant="ghost">
               <Link href="/">
                 <BarChart3Icon aria-hidden="true" data-icon="inline-start" />
-                Overview
+                Dashboard
               </Link>
             </Button>
             <Button asChild variant="ghost">
@@ -33,6 +42,27 @@ export default function DashboardLayout({
                   data-icon="inline-start"
                 />
                 Orders
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/refunds">
+                <RefreshCcwIcon
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
+                Refunds
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/imports">
+                <UploadIcon aria-hidden="true" data-icon="inline-start" />
+                Imports
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/alerts">
+                <BellIcon aria-hidden="true" data-icon="inline-start" />
+                Alerts
               </Link>
             </Button>
           </nav>

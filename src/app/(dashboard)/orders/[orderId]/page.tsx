@@ -141,6 +141,11 @@ export default async function OrderDetailPage({
                 order.currency,
               )}
             />
+            <Button asChild size="sm" variant="outline">
+              <Link href={`/customers/${order.customer.id}`}>
+                View customer
+              </Link>
+            </Button>
           </CardContent>
         </Card>
 

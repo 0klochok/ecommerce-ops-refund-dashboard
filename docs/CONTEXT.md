@@ -3,8 +3,8 @@
 ## Current State
 
 - Last updated: 2026-06-19
-- Phase: Phase 2 dashboard overview and orders workflow
-- Status: Prisma/PostgreSQL data foundation, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders table, and order detail route are implemented.
+- Phase: Phase 3 operational workflow
+- Status: Prisma/PostgreSQL data foundation, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders table, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, and alert recalculation are implemented.
 - Repository root: `C:\Users\alex\Documents\Coding Projects\Portfolio Projects\ecommerce-ops-refund-dashboard`
 - GitHub remote: configured as `origin`; Codex must not commit, push, tag, rewrite history, stage files, or alter remotes without explicit approval for that exact action.
 
@@ -18,6 +18,11 @@ Current runtime surfaces:
 - Dashboard overview: `/` renders KPI cards and a weekly revenue/refund Recharts visualization.
 - Orders workflow: `/orders` renders a TanStack Table with client-side search, filters, sorting, pagination, status badges, and detail links.
 - Order detail: `/orders/[orderId]` renders order, customer, line item, payment, refund, dispute, and fulfillment context.
+- Refunds/disputes: `/refunds` renders summary cards plus refund and dispute tables from seeded data.
+- Customer detail: `/customers/[customerId]` renders profile metrics, orders, refunds/disputes, notes, and a Zod-validated demo note form.
+- Imports: `/imports` uploads order CSV files to `POST /api/imports/orders` and creates local demo customers, orders, line items, payments, fulfillment events, and import batches.
+- Alerts: `/alerts` lists generated alerts and calls `POST /api/alerts/recalculate` for idempotent recalculation.
+- Reports: `GET /api/reports/weekly-ops?weekStart=YYYY-MM-DD` exports a weekly operations CSV.
 - Domain helpers: pure KPI, formatting, chart grouping, order filtering, refund summary, and status label/tone helpers under `src/lib/domain`.
 - Server data layer: Prisma reads under `src/server/repositories` and DTO mapping under `src/server/services`.
 - Database: PostgreSQL through Docker Compose and Prisma 7 with deterministic demo seed data.
@@ -46,16 +51,21 @@ Current runtime surfaces:
 | `src/app/(dashboard)` | Dashboard layout, overview route, orders route, and order detail route |
 | `src/components/dashboard` | KPI and chart components |
 | `src/components/orders` | Orders table and status badge components |
+| `src/app/api` | Route handlers for CSV imports, alert recalculation, and weekly CSV export |
 | `src/components/ui` | shadcn/ui source components |
-| `src/lib/domain` | Pure KPI, chart, order, and formatting helpers |
+| `src/lib/csv` | CSV parser and weekly report CSV escaping/building helpers |
+| `src/lib/domain` | Pure KPI, chart, order, alert, and formatting helpers |
+| `src/lib/validation` | Zod validation for order CSV imports |
 | `src/lib/db/prisma.ts` | Cached Prisma client helper for local Next.js development |
 | `src/lib/mock-data/refunds.ts` | Legacy synthetic refund records and helper tests retained for now |
 | `src/lib/store-adapters` | Mock-first store adapter contract and deterministic mock adapter |
 | `src/lib/test-data/stripe-events` | Mock Stripe-style event fixtures for future webhook tests |
 | `src/server/repositories` | Prisma read functions |
 | `src/server/services` | Server DTO mapping and aggregation services |
-| `tests/unit` | Vitest unit tests for domain helpers |
-| `e2e` | Playwright browser test for dashboard and orders flow |
+| `tests/unit` | Vitest unit tests for domain, CSV, alert, and order helpers |
+| `tests/integration` | Fake-repository service tests for imports and alert evaluation |
+| `tests/fixtures` | Valid and invalid order import CSV fixtures |
+| `e2e` | Playwright browser tests for dashboard/orders and operational workflows |
 | `prisma/schema.prisma` | Prisma PostgreSQL business schema for demo operations data |
 | `prisma/seed.ts` | Deterministic fake seed data using fixed reference date `2026-06-15T12:00:00.000Z` |
 | `docker-compose.yml` | Local PostgreSQL service `db` with safe local credentials |
@@ -93,10 +103,7 @@ Current runtime surfaces:
 
 ## Open Limits
 
-- No CSV import/export UI.
-- No standalone refunds/disputes page.
-- No customer detail page or editable notes.
-- No alert management page.
-- No Stripe webhook endpoint or real provider calls.
-- No auth or GitHub Actions.
+- No real Stripe webhook endpoint behavior or Stripe CLI workflow.
+- No real Shopify/WooCommerce adapters or live provider calls.
+- No auth, GitHub Actions, production deployment, screenshot polish, or demo video work.
 - `docs/REQ.md` is still a requirements template, and `docs/DESIGN.md` contains a design-reference artifact rather than a current app architecture spec.

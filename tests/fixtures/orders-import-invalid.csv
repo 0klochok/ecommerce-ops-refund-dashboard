@@ -1,0 +1,4 @@
+orderNumber,customerEmail,customerName,orderDate,productType,sku,itemName,quantity,unitAmountCents,fulfillmentStatus,paymentStatus,storeSource
+ORD-IMPORT-BAD-1,not-an-email,A,2026-06-14,PHYSICAL,PHY-BAD,"Bad customer",1,2599,UNFULFILLED,SUCCEEDED,CSV_IMPORT
+ORD-IMPORT-BAD-2,demo.bad.002@example.test,Bad Quantity,not-a-date,DIGITAL,DIG-BAD,"Bad quantity",0,-10,NOT_REQUIRED,SUCCEEDED,CSV_IMPORT
+ORD-IMPORT-BAD-3,demo.bad.003@example.test,Bad Status,2026-06-15,SERVICE,DIG-BAD-2,"Bad status",1,1999,MISSING,PAID,CSV_IMPORT

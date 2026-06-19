@@ -2,7 +2,7 @@
 
 ## Testing Policy
 
-The current app has a seeded Phase 2 Prisma-backed dashboard and orders workflow. Tests should protect pure domain calculations, DTO-independent helper behavior, dashboard/order browser flow, responsive usability, and local tooling without calling live external services.
+The current app has a seeded Phase 3 Prisma-backed dashboard, orders workflow, refunds/disputes page, customer detail page, CSV import flow, weekly CSV export, and alert recalculation workflow. Tests should protect pure domain calculations, DTO-independent helper behavior, CSV validation/escaping, alert candidate evaluation, import pipeline behavior, browser flows, responsive usability, and local tooling without calling live external services.
 
 Test data must be synthetic. Tests must not call live external APIs, paid APIs, Stripe, Shopify, WooCommerce, or real customer/order/payment systems.
 
@@ -14,7 +14,13 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 | Unit/domain | `tests/unit/domain/dashboard.test.ts` | Verifies weekly revenue/refund chart grouping and exclusion of non-counted records |
 | Unit/domain | `tests/unit/orders/orders.test.ts` | Verifies order search, combined filters, empty results, missing payment mapping, refund summary, and status label/tone helpers |
 | Unit/domain | `tests/unit/refunds.test.ts` | Legacy coverage for retained static refund helper utilities |
+| Unit/CSV | `tests/unit/csv/orders-import.test.ts` | Verifies valid and invalid order import fixtures with row-level errors |
+| Unit/CSV | `tests/unit/csv/weekly-ops-report.test.ts` | Verifies weekly operations CSV escaping for commas, quotes, and newlines |
+| Unit/alerts | `tests/unit/alerts/alerts.test.ts` | Verifies delayed fulfillment, high refund, repeated failed payment, and alert dedupe logic |
+| Integration-style | `tests/integration/imports/order-import-service.test.ts` | Verifies the CSV import service with a fake repository and fixture data |
+| Integration-style | `tests/integration/alerts/alert-evaluation-service.test.ts` | Verifies alert evaluation with a fake repository and existing-alert skip behavior |
 | E2E/browser | `e2e/dashboard.spec.ts` | Starts or reuses the Next dev server and checks the dashboard overview, KPI/chart visibility, orders table, search/filter interaction, and order detail route |
+| E2E/browser | `e2e/operations.spec.ts` | Verifies imports upload, imported order visibility, alert recalculation, and weekly CSV download |
 
 ## Required Gates
 
@@ -32,12 +38,9 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 Later phases should add focused tests for:
 
-- CSV import validation and error handling
-- Weekly CSV export generation
-- Standalone refunds/disputes workflows
-- Customer detail views and notes
-- Alert rule evaluation
-- Route-handler tests once APIs are introduced
+- Real Stripe test webhook behavior, only after explicit approval
+- Auth and permission boundaries, if auth is introduced
+- Route-handler tests around API error responses if those contracts become public
 - Repository integration tests if database read/write behavior becomes more complex
 
 ## Skipped Gate Policy

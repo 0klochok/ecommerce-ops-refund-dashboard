@@ -87,7 +87,7 @@ function getOrCreateBucket(
   return bucket;
 }
 
-function getUtcWeekStartIso(value: Date | string) {
+export function getUtcWeekStartIso(value: Date | string) {
   const date = toDate(value);
   const midnightUtc = Date.UTC(
     date.getUTCFullYear(),

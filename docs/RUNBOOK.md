@@ -53,6 +53,9 @@ Open:
 
 - `http://localhost:3000`
 - `http://localhost:3000/orders`
+- `http://localhost:3000/refunds`
+- `http://localhost:3000/imports`
+- `http://localhost:3000/alerts`
 
 ## Production Preview
 
@@ -94,6 +97,13 @@ Use synthetic demo data only. Do not enter or capture real customer, order, paym
 - [ ] Sorting: sort by order date and total and confirm row order changes.
 - [ ] Pagination: use Previous/Next where available and confirm page state changes.
 - [ ] Detail route: open a row detail and confirm order summary, customer summary, line items, payment/refund/dispute records, and fulfillment events render where available.
+- [ ] Refunds and disputes: open `http://localhost:3000/refunds` and confirm summary cards, refunds table, disputes table, status badges, and order/customer links render.
+- [ ] Customer detail: open a customer link from orders or refunds, confirm profile metrics, orders, refunds/disputes, and notes render.
+- [ ] Customer notes: add a synthetic note only, confirm it appears on the customer detail page, and do not enter real customer data.
+- [ ] CSV import: open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sample.csv`, and confirm the import summary reports created orders.
+- [ ] Import visibility: search `/orders` for an imported order number and confirm it appears.
+- [ ] Alerts: open `http://localhost:3000/alerts`, run Recalculate alerts, and confirm a second recalculation does not create duplicate alerts for the same conditions.
+- [ ] Weekly export: use the dashboard `Download weekly ops CSV` button and confirm a `.csv` file downloads.
 - [ ] Not found: open an invalid `/orders/not-a-real-order` URL and confirm the route-specific not-found state links back to orders.
 - [ ] Production preview smoke: run `pnpm build`, then `pnpm exec next start -p 3000 -H 127.0.0.1`, and confirm `/` and `/orders` load without the Next.js dev indicator.
 - [ ] Screenshot readiness: capture only from production preview and save final images under `docs/assets/screenshots/` using the convention documented there.

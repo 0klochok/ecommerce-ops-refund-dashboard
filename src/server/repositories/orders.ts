@@ -11,6 +11,7 @@ export async function readOrderTableRecords() {
         select: {
           email: true,
           firstName: true,
+          id: true,
           lastName: true,
         },
       },
@@ -55,6 +56,7 @@ export async function readOrderDetailRecord(orderId: string) {
           country: true,
           email: true,
           firstName: true,
+          id: true,
           lastName: true,
           lifetimeValueCents: true,
           phone: true,
