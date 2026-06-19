@@ -3,12 +3,148 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Final portfolio/demo hardening
-- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, local-validation-based CI, tests, and documentation are implemented.
-- Quality gate status: green after final hardening validation
+- Phase: Final production-preview screenshots and demo video readiness
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, final production-preview screenshots, local-validation-based CI, tests, and documentation are implemented.
+- Quality gate status: green after final production-preview capture and post-capture validation
 - Current branch: `main`
-- Git status: Final hardening changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, deleted branches, or changed remotes
+- Git status: Final screenshot assets and documentation updates are unstaged/untracked; Codex has not staged, committed, pushed, tagged, rewritten history, deleted branches, or changed remotes
 - Main blocker: none. The project database maps to host port `5433`.
+
+## Final Production-Preview Screenshots And Demo Readiness - 2026-06-19
+
+### Phase Objective
+
+Run the portfolio app from local production preview, follow the screenshot checklist and demo video script against deterministic seeded demo data, capture final screenshots, verify the demo flows, and rerun the required local quality gates without adding product scope.
+
+### Summary
+
+- Inspected `docs/STATE.md`, `docs/screenshots-checklist.md`, `docs/demo-video-script.md`, `README.md`, `docs/RUNBOOK.md`, `docs/assets/screenshots/README.md`, package scripts, Playwright config, and existing E2E tests before capture.
+- Restored the local PostgreSQL demo baseline with Docker, Prisma generate, and deterministic seed data.
+- Ran the required pre-capture gates: lint, typecheck, Vitest, and production build.
+- Started local production preview with `pnpm exec next start -p 3000 -H 127.0.0.1`; no deployment, paid API, real provider call, Stripe CLI command, or external service call was used.
+- Attempted the in-app Browser path first, but Browser bootstrap failed with the Windows sandbox process-launch error `CreateProcessAsUserW failed: 5`; project-local Playwright was used as the screenshot and demo verification fallback.
+- Captured the final screenshot set under `docs/assets/screenshots/` from production preview. The capture verified no non-local HTTP requests and no relevant browser console warnings/errors.
+- Verified every `docs/demo-video-script.md` scene as a working flow or evidence screen: overview, KPI/chart, orders filter, order detail, refunds/disputes, customer detail, CSV import, alerts, weekly export, mock Stripe webhook test evidence, and README data-safety disclaimer.
+- Actual narrated video recording was not produced in this environment because the available automation can verify/capture browser states but cannot produce a human-narrated 2-4 minute portfolio video. The human follow-up is to record using `docs/demo-video-script.md` and the captured screenshots.
+- Updated `docs/assets/screenshots/README.md` because the old Phase 2 naming convention said no binary screenshots existed and listed obsolete screenshot names.
+- Restored the database to the deterministic seed baseline again after E2E/import checks mutated local demo data.
+- No app logic, schema, migration, dependency, GitHub Actions/CI, external integration, real data, paid API, Stripe CLI command, commit, push, tag, staging, history rewrite, branch deletion, or remote change was performed.
+
+### Files Changed
+
+- `docs/STATE.md`: recorded this production-preview screenshot/demo readiness phase, validation, screenshot paths, demo verification, skipped checks, risks, current git status, and next step.
+- `docs/assets/screenshots/README.md`: updated the screenshot asset convention to match the final captured portfolio screenshot set.
+- `docs/assets/screenshots/overview-dashboard.png`
+- `docs/assets/screenshots/dashboard-kpi-cards.png`
+- `docs/assets/screenshots/revenue-refund-chart.png`
+- `docs/assets/screenshots/orders-table-filters.png`
+- `docs/assets/screenshots/order-detail-page.png`
+- `docs/assets/screenshots/refunds-disputes-page.png`
+- `docs/assets/screenshots/customer-detail-page.png`
+- `docs/assets/screenshots/csv-import-success-state.png`
+- `docs/assets/screenshots/alerts-list.png`
+- `docs/assets/screenshots/weekly-csv-export.png`
+- `docs/assets/screenshots/stripe-webhook-mock-test-evidence.png`
+- `docs/assets/screenshots/readme-demo-data-disclaimer.png`
+- `docs/assets/screenshots/mobile-orders-queue.png`
+
+### Screenshot And Demo Verification
+
+| Checklist item | Status | Screenshot/evidence |
+|---|---|---|
+| Dashboard overview | pass | `docs/assets/screenshots/overview-dashboard.png` |
+| KPI cards | pass | `docs/assets/screenshots/dashboard-kpi-cards.png` |
+| Revenue/refund chart | pass | `docs/assets/screenshots/revenue-refund-chart.png` |
+| Orders table with filters | pass | `docs/assets/screenshots/orders-table-filters.png` |
+| Order detail page | pass | `docs/assets/screenshots/order-detail-page.png` |
+| Refunds/disputes page | pass | `docs/assets/screenshots/refunds-disputes-page.png` |
+| Customer detail page | pass | `docs/assets/screenshots/customer-detail-page.png` |
+| CSV import success state | pass | `docs/assets/screenshots/csv-import-success-state.png` |
+| Alerts list | pass | `docs/assets/screenshots/alerts-list.png` |
+| Weekly CSV export | pass | `docs/assets/screenshots/weekly-csv-export.png` |
+| Stripe webhook/mock test evidence | pass | `docs/assets/screenshots/stripe-webhook-mock-test-evidence.png` |
+| README/demo data disclaimer | pass | `docs/assets/screenshots/readme-demo-data-disclaimer.png` |
+| Optional mobile sanity check | pass | `docs/assets/screenshots/mobile-orders-queue.png` |
+
+Demo-script verification result: pass for readiness. The exact browser flow verified was `/` dashboard overview -> weekly CSV export -> `/orders` search `ORD-DEMO-00017` plus Failed payment filter -> order detail -> customer detail -> `/refunds` -> `/imports` successful synthetic CSV import -> `/alerts` recalculation -> webhook test evidence -> README data disclaimer. No real customer, order, payment, refund, Stripe, Shopify, WooCommerce, credential, token, or external service data was entered or captured.
+
+### Validation
+
+| Gate | Command | Status | Exact result |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was running |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to `src/generated/prisma` |
+| Deterministic seed before capture | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Pre-capture lint | `pnpm lint` | pass | `eslint .` completed with no reported errors |
+| Pre-capture typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Pre-capture tests | `pnpm test` | pass | 11 test files and 47 tests passed |
+| Pre-capture build | `pnpm build` | pass | Next.js 16.2.9 production build compiled successfully and listed the dashboard, operational routes, and API route handlers |
+| Focused webhook evidence | `pnpm test -- tests/unit/stripe tests/integration/webhooks` | pass | 2 test files and 13 tests passed; output captured as sanitized screenshot evidence |
+| Production preview | `pnpm exec next start -p 3000 -H 127.0.0.1` | pass | Local production preview served `http://127.0.0.1:3000`; stopped after capture |
+| Screenshot/demo capture | `pnpm exec tsx .scratch/final-preview-capture.ts` | pass | Saved 13 screenshots, verified demo flow states, observed no non-local requests and no relevant console warnings/errors; temporary `.scratch/` files were removed |
+| Post-capture lint | `pnpm lint` | pass | `eslint .` completed with no reported errors |
+| Post-capture typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Post-capture tests | `pnpm test` | pass | 11 test files and 47 tests passed |
+| Post-capture build | `pnpm build` | pass | Next.js 16.2.9 production build compiled successfully |
+| Post-capture E2E | `pnpm e2e -- --project=chromium` | pass | 2 Playwright Chromium tests passed |
+| Whitespace check | `git diff --check` | pass | Exit code 0; final rerun reported CRLF line-ending warnings for `docs/STATE.md` and `docs/assets/screenshots/README.md` only |
+| Secret/data scan | PowerShell `rg` scan for live-secret patterns and real-data indicators, excluding generated/local env/screenshot/temp artifacts | pass | No live-secret pattern files found; data-policy matches were safety/disclaimer documentation only |
+| Final baseline restore | `pnpm db:seed` | pass | Restored deterministic seed counts after screenshot/import/E2E workflows |
+
+Secret/data scan command shape:
+
+```powershell
+$secretPattern = '(' + 'sk_live_' + '[A-Za-z0-9]+|' + 'rk_live_' + '[A-Za-z0-9]+|' + 'pk_live_' + '[A-Za-z0-9]+|' + 'whsec_live_' + '[A-Za-z0-9]+|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |DSA |EC |OPENSSH |PGP )?PRIVATE KEY-----|xox[baprs]-[A-Za-z0-9-]+)'
+rg --hidden --files-with-matches --ignore-case --glob '!node_modules/**' --glob '!.next/**' --glob '!coverage/**' --glob '!test-results/**' --glob '!playwright-report/**' --glob '!src/generated/**' --glob '!.scratch/**' --glob '!*.png' --glob '!.env' --glob '!.env*.local' $secretPattern .
+$dataPattern = '(real Stripe|real Shopify|real WooCommerce|real customer|real order|real payment|real refund|production credential|production payment|live Stripe|paid API|@(gmail|yahoo|hotmail|outlook|icloud)\.com)'
+rg --hidden --line-number --ignore-case --glob '!node_modules/**' --glob '!.next/**' --glob '!coverage/**' --glob '!test-results/**' --glob '!playwright-report/**' --glob '!src/generated/**' --glob '!.scratch/**' --glob '!*.png' --glob '!.env' --glob '!.env*.local' $dataPattern README.md docs src tests prisma .env.example package.json
+```
+
+### Skipped Or Blocked Checks
+
+- No required validation gate was skipped.
+- In-app Browser QA was attempted first but blocked by Windows sandbox process launch failure: `CreateProcessAsUserW failed: 5`. Project-local Playwright completed the browser verification fallback.
+- Narrated video recording was not produced. The verified script is ready for manual recording, but the environment did not provide a reliable human narration/screen-recording tool.
+- Stripe CLI was not run because this phase did not require it and explicit user approval for Stripe CLI was not provided.
+
+### Manual QA Notes
+
+- The final screenshots were captured from production preview, not `pnpm dev`, so the Next.js dev indicator is not present.
+- The local database is currently restored to deterministic seed baseline. To reproduce the import success state manually, upload `tests/fixtures/orders-import-sample.csv` or another synthetic CSV from `/imports`.
+- For the portfolio video, start with `pnpm build` and `pnpm exec next start -p 3000 -H 127.0.0.1`, open `http://127.0.0.1:3000`, and narrate the scenes in `docs/demo-video-script.md`.
+- Use screenshots under `docs/assets/screenshots/` as still-image backup if any live step needs to be trimmed in the final video.
+
+### Current Git Status
+
+Expected close-of-phase `git status --short`:
+
+```text
+ M docs/STATE.md
+ M docs/assets/screenshots/README.md
+?? docs/assets/screenshots/alerts-list.png
+?? docs/assets/screenshots/csv-import-success-state.png
+?? docs/assets/screenshots/customer-detail-page.png
+?? docs/assets/screenshots/dashboard-kpi-cards.png
+?? docs/assets/screenshots/mobile-orders-queue.png
+?? docs/assets/screenshots/order-detail-page.png
+?? docs/assets/screenshots/orders-table-filters.png
+?? docs/assets/screenshots/overview-dashboard.png
+?? docs/assets/screenshots/readme-demo-data-disclaimer.png
+?? docs/assets/screenshots/refunds-disputes-page.png
+?? docs/assets/screenshots/revenue-refund-chart.png
+?? docs/assets/screenshots/stripe-webhook-mock-test-evidence.png
+?? docs/assets/screenshots/weekly-csv-export.png
+```
+
+### Remaining Risks And Limitations
+
+- This remains a local portfolio/demo app with no auth, no production deployment, no live provider sync, and no real commerce/payment data.
+- Screenshots are static evidence; the final portfolio video still requires a human recording pass with narration.
+- Playwright E2E and import demo flows mutate the local database during execution; rerun `pnpm db:seed` before a fresh manual demo.
+
+### Suggested Next Phase
+
+Record and edit the final 2-4 minute portfolio demo video using `docs/demo-video-script.md`, the production-preview app, and the captured screenshots as fallback stills. After the video is approved, do a final repository review and prepare a commit/PR only if explicitly requested.
 
 ## Final Portfolio/Demo Hardening - 2026-06-19
 
