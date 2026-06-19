@@ -1,6 +1,6 @@
 # E-commerce Ops Refund Dashboard
 
-Portfolio-grade internal operations dashboard for a small e-commerce store. The current app is a mock-only Phase 2 refund operations surface built for portfolio/client review, screenshots, and local QA without real commerce or payment data.
+Portfolio-grade internal operations dashboard for a small e-commerce store. The current repo has a seeded local PostgreSQL/Prisma data foundation plus an existing mock-only refund operations surface for portfolio/client review, screenshots, and local QA without real commerce or payment data.
 
 ## What It Solves
 
@@ -8,19 +8,24 @@ Small e-commerce teams often need a quick way to review refund workload, identif
 
 ## Current Implemented Scope
 
+- Prisma data model for customers, orders, order items, payments, refunds, disputes, fulfillment events, alert rules, alerts, customer notes, import batches, and webhook events.
+- Deterministic fake seed data for a credible operations dataset.
+- Mock Stripe-style webhook fixtures and mock-first store adapter contracts.
+- Pure KPI/domain calculations for future dashboard cards.
 - KPI summary cards for total refunded, open refunds, urgent/high-risk refunds, and average refund amount.
 - Interactive refund operations queue with search across refund id, order id, and customer label.
 - Status, channel, and urgent/high-risk filters.
 - Amount and created-date sorting.
 - Empty state with clear-filters recovery.
 - Selected refund detail panel that opens only after row selection, can be closed, returns focus, and stays responsive at desktop, 900px, and mobile widths.
-- Automated Vitest and Playwright coverage for the main dashboard flow and responsive containment.
+- Automated Vitest and Playwright coverage for the domain calculations, main dashboard flow, and responsive containment.
 
-Planned later phases include order/customer pages, CSV import/export, alert rules, seeded database-backed data, and mock-first adapter boundaries for Shopify, WooCommerce, and Stripe-only businesses. Those flows are not implemented in the current app.
+The existing UI is still intentionally backed by static mock data. Later phases can connect the UI to the Prisma-backed data layer and add order/customer pages, CSV import/export, alert evaluation workflows, and route handlers.
 
 ## Data And Integration Safety
 
 - All visible data is synthetic demo data.
+- Seeded database data is deterministic and fake.
 - Do not use real Stripe, Shopify, WooCommerce, customer, order, payment, or refund data.
 - External integrations default to mock/no-paid-API mode.
 - Stripe test webhooks require explicit approval before use.
@@ -34,7 +39,7 @@ Planned later phases include order/customer pages, CSV import/export, alert rule
 - Tailwind CSS v4
 - shadcn/ui using the Radix Nova preset and Lucide icons
 - Next.js Route Handlers reserved for future backend endpoints
-- Prisma 7 with local PostgreSQL through Docker Compose reserved for later persistence work
+- Prisma 7 with local PostgreSQL through Docker Compose
 - Vitest, Testing Library, and jsdom for unit/component tests
 - Playwright Chromium for browser/E2E tests
 - pnpm as the only project package manager
@@ -50,14 +55,48 @@ pnpm install
 Copy-Item .env.example .env.local
 ```
 
-The current dashboard does not require the local PostgreSQL container to render because it uses static mock data. Keep `.env.local` local-only and do not commit real secrets.
+The current dashboard does not require the local PostgreSQL container to render because the visible UI still uses static mock data. Keep `.env.local` local-only and do not commit real secrets.
 
-Optional local PostgreSQL for future database phases:
+## Database, Migrations, And Seed Data
+
+The local database service is named `db` and maps container port `5432` to host port `5433` to avoid common local Postgres conflicts.
 
 ```powershell
-docker compose up -d
+docker compose up -d db
 docker compose ps
+pnpm prisma migrate dev --name phase_1_data_model
+pnpm db:generate
+pnpm db:seed
+pnpm db:studio
 ```
+
+The Phase 1 seed uses fixed reference date `2026-06-15T12:00:00.000Z` and a fixed pseudo-random seed. It creates 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events.
+
+Useful database scripts:
+
+```powershell
+pnpm db:generate
+pnpm db:migrate
+pnpm db:seed
+pnpm db:studio
+pnpm db:reset
+```
+
+## KPI Formulas
+
+- Gross revenue cents: paid non-canceled order total.
+- Order count: paid non-canceled orders.
+- Refund amount cents: succeeded/completed refund amount only.
+- Refund rate: refund amount divided by gross revenue; zero when gross revenue is zero.
+- Average order value cents: gross revenue divided by paid non-canceled order count.
+- Unfulfilled orders: physical orders that are not fulfilled and not canceled.
+- Delayed fulfillment: unfulfilled physical orders older than the configured delay threshold.
+- Failed payment count: failed payments.
+- Disputed amount cents: active dispute exposure; closed, won, and lost disputes are excluded.
+
+## Mock Integrations
+
+Mock Stripe-style event fixtures live under `src/lib/test-data/stripe-events/` and contain fake `evt_mock_`, `pi_mock_`, `re_mock_`, and `dp_mock_` identifiers only. The mock store adapter under `src/lib/store-adapters/` defines the contract future Shopify, WooCommerce, Stripe-only, or CSV adapters can implement without adding real network calls or credentials in this phase.
 
 ## Run Development Mode
 

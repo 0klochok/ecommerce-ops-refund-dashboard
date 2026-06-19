@@ -50,11 +50,22 @@ Use production preview for portfolio screenshots so the Next.js dev indicator do
 ## Start Local PostgreSQL
 
 ```powershell
-docker compose up -d
+docker compose up -d db
 docker compose ps
 ```
 
-The current Phase 2 dashboard uses static mock data and does not require the database to render. The local database uses safe development credentials from `docker-compose.yml` and `.env.example` for later persistence phases.
+The local database uses safe development credentials from `docker-compose.yml` and `.env.example`. It maps container port `5432` to host port `5433`. The visible dashboard still uses static mock data and does not require the database to render.
+
+## Migrate, Generate, And Seed
+
+```powershell
+pnpm prisma migrate dev --name phase_1_data_model
+pnpm db:generate
+pnpm db:seed
+pnpm db:studio
+```
+
+The seed is deterministic, uses fixed reference date `2026-06-15T12:00:00.000Z`, and contains fake demo records only.
 
 ## Quality Gates
 
@@ -86,6 +97,7 @@ Use synthetic demo data only. Do not enter or capture real customer, order, paym
 - [ ] 900px layout: at `900x900`, confirm selecting a refund scrolls toward the detail panel and closing returns toward the selected row.
 - [ ] Mobile layout: at about `390x900`, confirm controls remain usable, table scrolling is contained, detail content wraps, and there is no page-level horizontal overflow.
 - [ ] Screenshot readiness: capture only from production preview and save final images under `docs/assets/screenshots/` using the convention documented there.
+- [ ] Database seed check: run `pnpm db:studio` and confirm customers, orders, refunds, disputes, webhook events, alert rules, and alerts exist.
 
 ## Logs
 

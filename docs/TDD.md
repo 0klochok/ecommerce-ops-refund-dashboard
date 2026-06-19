@@ -2,7 +2,7 @@
 
 ## Testing Policy
 
-The current app is a mock-only Phase 2 refund operations dashboard. Tests should protect the implemented dashboard behavior, responsive containment, accessibility-relevant interactions, and local tooling without calling live external services.
+The current app has a seeded Phase 1 data foundation and an existing mock-only refund operations dashboard. Tests should protect the implemented domain calculations, dashboard behavior, responsive containment, accessibility-relevant interactions, and local tooling without calling live external services.
 
 Test data must be synthetic. Tests must not call live external APIs, paid APIs, Stripe, Shopify, WooCommerce, or real customer/order/payment systems.
 
@@ -12,6 +12,7 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 |---|---|---|
 | Unit/component | `tests/unit/page.test.tsx` | Verifies the dashboard renders KPI content, refund queue controls, selected-detail behavior, accessibility labels, and focus recovery |
 | Unit/domain | `tests/unit/refunds.test.ts` | Verifies mock refund metrics, urgent/high-risk classification, search, filters, sorting, and empty results |
+| Unit/domain | `tests/unit/domain/kpis.test.ts` | Verifies Phase 1 KPI formulas, zero-revenue behavior, canceled-order exclusion, refund status handling, unfulfilled/delayed fulfillment counts, failed payments, and active dispute exposure |
 | E2E/browser | `e2e/home.spec.ts` | Starts or reuses the Next dev server and checks the main dashboard flow, detail-panel behavior, responsive containment, and no page-level horizontal overflow in Chromium |
 
 ## Required Gates
@@ -30,14 +31,13 @@ Test data must be synthetic. Tests must not call live external APIs, paid APIs, 
 
 Later phases should add focused tests for:
 
-- Order KPI calculations and order-table pagination
+- Order-table pagination
 - CSV import validation and error handling
 - Refund/dispute workflows beyond the current static detail panel
 - Customer detail views and notes
 - Alert rule evaluation
 - Weekly CSV export generation
-- Mock adapter contracts for Stripe/store data
-- Prisma-backed persistence once business models are introduced
+- Route-handler and repository tests once the UI/API starts reading Prisma-backed data
 
 ## Skipped Gate Policy
 

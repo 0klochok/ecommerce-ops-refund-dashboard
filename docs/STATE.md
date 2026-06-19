@@ -2,13 +2,66 @@
 
 ## Status Snapshot
 
-- Last updated: 2026-06-18
-- Phase: Phase 2.6 - portfolio documentation prep
-- Overall status: Phase 2.6 documentation prep completed; README, runbook/manual QA, test context, project context, and screenshot naming convention now reflect the current mock-only Phase 2 dashboard
-- Quality gate status: green after Phase 2.6 validation
+- Last updated: 2026-06-19
+- Phase: Phase 1 data foundation
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, mock store adapter contracts, KPI/domain calculations, tests, and documentation are implemented. The existing visible dashboard still uses static mock data until a later connection phase.
+- Quality gate status: green after Phase 1 validation
 - Current branch: `main`
-- Git status: Phase 2.6 documentation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
-- Main blocker: in-app Browser bootstrap remains blocked by Windows sandbox; production-preview QA passed through repo-local Playwright fallback
+- Git status: Phase 1 data foundation changes are unstaged; Codex has not staged, committed, pushed, tagged, rewritten history, or changed remotes
+- Main blocker: none for Phase 1. The project database maps to host port `5433` because an unrelated Docker container named `salesops-postgres` was already using host port `5432`.
+
+## Phase 1 Data Foundation - 2026-06-19
+
+### Summary
+
+- Added a Prisma/PostgreSQL demo operations schema covering customers, orders, order items, payments, refunds, disputes, fulfillment events, alert rules, alerts, customer notes, import batches, and webhook events.
+- Added deterministic fake seed data using fixed reference date `2026-06-15T12:00:00.000Z` and mock/test identifiers only.
+- Added a cached Prisma client helper for Next.js local development, mock Stripe-style event fixtures, mock-first store adapter contracts, and pure KPI/domain calculations.
+- Added Vitest unit coverage for KPI formulas and updated README/context/runbook/test documentation.
+- No UI pages/components, route handlers, CSV UI/export UI, auth, real adapters, real Stripe calls, paid APIs, GitHub Actions, commits, pushes, tags, staging, history rewrites, or remote changes were added.
+
+### Seed Summary
+
+| Table | Count |
+|---|---:|
+| Customers | 85 |
+| Orders | 180 |
+| Order items | 420 |
+| Payments | 174 |
+| Refunds | 37 |
+| Disputes | 7 |
+| Fulfillment events | 244 |
+| Alert rules | 3 |
+| Alerts | 33 |
+| Customer notes | 30 |
+| Import batches | 3 |
+| Webhook events | 219 |
+
+### Validation
+
+| Gate | Command | Status | Notes |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass after port fix | Initial attempt failed because host port `5432` was already allocated by unrelated `salesops-postgres`; project DB now uses host port `5433` |
+| Install | `pnpm install` | pass | Already up to date |
+| Prisma migrate | `pnpm prisma migrate dev --name phase_1_data_model` | pass | Created and applied `20260619043523_phase_1_data_model` |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to ignored `src/generated/prisma` |
+| Prisma seed | `pnpm db:seed` | pass | Seed counts listed above |
+| Lint | `pnpm lint` | pass | ESLint completed with no errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Unit/component tests | `pnpm test` | pass | 3 test files and 24 tests passed |
+| Build | `pnpm build` | pass | Next.js production build completed |
+| E2E | `pnpm e2e` | pass | 5 Playwright Chromium tests passed |
+
+### Manual Verification
+
+- Recommended manual database check: run `pnpm db:studio` and confirm customers, orders, refunds, disputes, webhook events, alert rules, and alerts exist.
+- The visible dashboard still uses static mock data, so browser manual QA remains the existing runbook flow.
+
+### Notes
+
+- `.env.local` was created from `.env.example` with safe local placeholders only and remains ignored.
+- Docker Desktop was launched to run the local database validation.
+- `src/generated/prisma/` is intentionally ignored; run `pnpm db:generate` after schema changes or fresh checkout setup.
 
 ## Phase 2.6 - Portfolio Documentation Prep - 2026-06-18
 

@@ -6,3 +6,405 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  CANCELED
+  PAYMENT_FAILED
+  DISPUTED
+}
+
+enum FulfillmentStatus {
+  NOT_REQUIRED
+  UNFULFILLED
+  PARTIALLY_FULFILLED
+  FULFILLED
+  DELAYED
+  CANCELED
+}
+
+enum PaymentStatus {
+  REQUIRES_PAYMENT
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+  PARTIALLY_REFUNDED
+  REFUNDED
+  DISPUTED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum DisputeStatus {
+  NEEDS_RESPONSE
+  UNDER_REVIEW
+  WON
+  LOST
+  CLOSED
+}
+
+enum ProductType {
+  PHYSICAL
+  DIGITAL
+  GIFT_CARD
+}
+
+enum PaymentProvider {
+  MOCK_STRIPE
+  STRIPE
+  SHOPIFY_PAYMENTS
+  WOOCOMMERCE_PAYMENTS
+  MANUAL
+}
+
+enum StoreSource {
+  MOCK_STORE
+  SHOPIFY
+  WOOCOMMERCE
+  STRIPE_ONLY
+  CSV_IMPORT
+}
+
+enum AlertType {
+  DELAYED_FULFILLMENT
+  HIGH_REFUND_AMOUNT
+  REPEATED_FAILED_PAYMENT
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+  DISMISSED
+}
+
+enum WebhookProvider {
+  MOCK_STRIPE
+  STRIPE
+  SHOPIFY
+  WOOCOMMERCE
+}
+
+enum WebhookProcessingStatus {
+  PENDING
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+enum ImportBatchStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Customer {
+  id                 String         @id @default(cuid())
+  email              String         @unique
+  firstName          String         @map("first_name")
+  lastName           String         @map("last_name")
+  phone              String?
+  city               String?
+  state              String?
+  country            String         @default("US")
+  lifetimeValueCents Int            @default(0) @map("lifetime_value_cents")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  alerts             Alert[]
+  notes              CustomerNote[]
+  orders             Order[]
+  payments           Payment[]
+
+  @@index([createdAt])
+  @@map("customers")
+}
+
+model Order {
+  id                String            @id @default(cuid())
+  orderNumber       String            @unique @map("order_number")
+  source            StoreSource       @default(MOCK_STORE)
+  sourceOrderId     String            @map("source_order_id")
+  status            OrderStatus       @default(PENDING)
+  fulfillmentStatus FulfillmentStatus @default(UNFULFILLED) @map("fulfillment_status")
+  placedAt          DateTime          @map("placed_at")
+  canceledAt        DateTime?         @map("canceled_at")
+  currency          String            @default("USD")
+  subtotalCents     Int               @map("subtotal_cents")
+  discountCents     Int               @default(0) @map("discount_cents")
+  shippingCents     Int               @default(0) @map("shipping_cents")
+  taxCents          Int               @default(0) @map("tax_cents")
+  totalCents        Int               @map("total_cents")
+  hasPhysicalItems  Boolean           @default(false) @map("has_physical_items")
+  hasDigitalItems   Boolean           @default(false) @map("has_digital_items")
+  customerId        String            @map("customer_id")
+  importBatchId     String?           @map("import_batch_id")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  alerts            Alert[]
+  customer          Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fulfillmentEvents FulfillmentEvent[]
+  importBatch       ImportBatch?      @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  items             OrderItem[]
+  notes             CustomerNote[]
+  payments          Payment[]
+  refunds           Refund[]
+  disputes          Dispute[]
+
+  @@unique([source, sourceOrderId])
+  @@index([customerId])
+  @@index([importBatchId])
+  @@index([placedAt])
+  @@index([status, placedAt])
+  @@index([fulfillmentStatus, placedAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                  String      @id @default(cuid())
+  orderId             String      @map("order_id")
+  sku                 String
+  name                String
+  productType         ProductType @map("product_type")
+  quantity            Int
+  unitAmountCents     Int         @map("unit_amount_cents")
+  totalAmountCents    Int         @map("total_amount_cents")
+  fulfillableQuantity Int         @default(0) @map("fulfillable_quantity")
+  fulfilledQuantity   Int         @default(0) @map("fulfilled_quantity")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  order               Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([productType])
+  @@map("order_items")
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  provider          PaymentProvider @default(MOCK_STRIPE)
+  providerPaymentId String          @unique @map("provider_payment_id")
+  status            PaymentStatus   @default(PROCESSING)
+  amountCents       Int             @map("amount_cents")
+  currency          String          @default("USD")
+  failureCode       String?         @map("failure_code")
+  failureMessage    String?         @map("failure_message")
+  paidAt            DateTime?       @map("paid_at")
+  failedAt          DateTime?       @map("failed_at")
+  customerId        String          @map("customer_id")
+  orderId           String          @map("order_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  alerts            Alert[]
+  customer          Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  disputes          Dispute[]
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds           Refund[]
+  webhookEvents     WebhookEvent[]
+
+  @@index([customerId])
+  @@index([orderId])
+  @@index([provider, status])
+  @@index([status, createdAt])
+  @@map("payments")
+}
+
+model Refund {
+  id               String          @id @default(cuid())
+  provider         PaymentProvider @default(MOCK_STRIPE)
+  providerRefundId String          @unique @map("provider_refund_id")
+  status           RefundStatus    @default(PENDING)
+  amountCents      Int             @map("amount_cents")
+  currency         String          @default("USD")
+  reason           String
+  requestedAt      DateTime        @map("requested_at")
+  processedAt      DateTime?       @map("processed_at")
+  orderId          String          @map("order_id")
+  paymentId        String?         @map("payment_id")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
+  alerts           Alert[]
+  order            Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment          Payment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  webhookEvents    WebhookEvent[]
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([status, requestedAt])
+  @@map("refunds")
+}
+
+model Dispute {
+  id                String          @id @default(cuid())
+  provider          PaymentProvider @default(MOCK_STRIPE)
+  providerDisputeId String          @unique @map("provider_dispute_id")
+  status            DisputeStatus
+  amountCents       Int             @map("amount_cents")
+  currency          String          @default("USD")
+  reason            String
+  openedAt          DateTime        @map("opened_at")
+  closedAt          DateTime?       @map("closed_at")
+  orderId           String          @map("order_id")
+  paymentId         String?         @map("payment_id")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  alerts            Alert[]
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment           Payment?        @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  webhookEvents     WebhookEvent[]
+
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([status, openedAt])
+  @@map("disputes")
+}
+
+model FulfillmentEvent {
+  id             String            @id @default(cuid())
+  orderId        String            @map("order_id")
+  status         FulfillmentStatus
+  occurredAt     DateTime          @map("occurred_at")
+  carrier        String?
+  trackingNumber String?           @map("tracking_number")
+  notes          String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  order          Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([status, occurredAt])
+  @@map("fulfillment_events")
+}
+
+model AlertRule {
+  id                    String        @id @default(cuid())
+  name                  String        @unique
+  type                  AlertType
+  severity              AlertSeverity
+  thresholdCents        Int?          @map("threshold_cents")
+  thresholdHours        Int?          @map("threshold_hours")
+  failureCountThreshold Int?          @map("failure_count_threshold")
+  enabled               Boolean       @default(true)
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  alerts                Alert[]
+
+  @@index([type, enabled])
+  @@map("alert_rules")
+}
+
+model Alert {
+  id          String        @id @default(cuid())
+  ruleId      String        @map("rule_id")
+  type        AlertType
+  severity    AlertSeverity
+  status      AlertStatus   @default(OPEN)
+  title       String
+  description String
+  triggeredAt DateTime      @map("triggered_at")
+  resolvedAt  DateTime?     @map("resolved_at")
+  customerId  String?       @map("customer_id")
+  orderId     String?       @map("order_id")
+  paymentId   String?       @map("payment_id")
+  refundId    String?       @map("refund_id")
+  disputeId   String?       @map("dispute_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  customer    Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  dispute     Dispute?      @relation(fields: [disputeId], references: [id], onDelete: SetNull)
+  order       Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  payment     Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  refund      Refund?       @relation(fields: [refundId], references: [id], onDelete: SetNull)
+  rule        AlertRule     @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([disputeId])
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([refundId])
+  @@index([ruleId])
+  @@index([status, triggeredAt])
+  @@index([type, status])
+  @@map("alerts")
+}
+
+model CustomerNote {
+  id          String   @id @default(cuid())
+  customerId  String   @map("customer_id")
+  orderId     String?  @map("order_id")
+  authorLabel String   @map("author_label")
+  body        String
+  createdAt   DateTime @default(now()) @map("created_at")
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([orderId])
+  @@map("customer_notes")
+}
+
+model ImportBatch {
+  id           String            @id @default(cuid())
+  source       StoreSource
+  status       ImportBatchStatus @default(PENDING)
+  fileName     String            @map("file_name")
+  importedAt   DateTime          @map("imported_at")
+  completedAt  DateTime?         @map("completed_at")
+  rowCount     Int               @default(0) @map("row_count")
+  successCount Int               @default(0) @map("success_count")
+  failureCount Int               @default(0) @map("failure_count")
+  notes        String?
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+  orders       Order[]
+  webhookEvents WebhookEvent[]
+
+  @@index([source, importedAt])
+  @@index([status, importedAt])
+  @@map("import_batches")
+}
+
+model WebhookEvent {
+  id              String                  @id @default(cuid())
+  provider        WebhookProvider
+  providerEventId String                  @unique @map("provider_event_id")
+  eventType       String                  @map("event_type")
+  status          WebhookProcessingStatus @default(PENDING)
+  receivedAt      DateTime                @map("received_at")
+  processedAt     DateTime?               @map("processed_at")
+  payload         Json
+  errorMessage    String?                 @map("error_message")
+  paymentId       String?                 @map("payment_id")
+  refundId        String?                 @map("refund_id")
+  disputeId       String?                 @map("dispute_id")
+  importBatchId   String?                 @map("import_batch_id")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+  dispute         Dispute?                @relation(fields: [disputeId], references: [id], onDelete: SetNull)
+  importBatch     ImportBatch?            @relation(fields: [importBatchId], references: [id], onDelete: SetNull)
+  payment         Payment?                @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  refund          Refund?                 @relation(fields: [refundId], references: [id], onDelete: SetNull)
+
+  @@index([disputeId])
+  @@index([importBatchId])
+  @@index([paymentId])
+  @@index([refundId])
+  @@index([provider, eventType])
+  @@index([status, receivedAt])
+  @@map("webhook_events")
+}
