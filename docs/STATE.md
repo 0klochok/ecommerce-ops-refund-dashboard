@@ -3,12 +3,90 @@
 ## Status Snapshot
 
 - Last updated: 2026-06-19
-- Phase: Final production-preview screenshots and demo video readiness
-- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, final production-preview screenshots, local-validation-based CI, tests, and documentation are implemented.
-- Quality gate status: green after final production-preview capture and post-capture validation
+- Phase: Manual portfolio demo recording package readiness
+- Overall status: Prisma/PostgreSQL data model, deterministic seed data, mock integration fixtures, KPI/domain calculations, Prisma-backed dashboard overview, orders workflow, order detail route, refunds/disputes page, customer detail page, CSV import, weekly CSV export, alert recalculation, mock/test-only Stripe webhook handling, portfolio screenshot/demo docs, final production-preview screenshots, manual recording checklist, local-validation-based CI, tests, and documentation are implemented.
+- Quality gate status: green after manual recording package validation
 - Current branch: `main`
-- Git status: Final screenshot assets and documentation updates are unstaged/untracked; Codex has not staged, committed, pushed, tagged, rewritten history, deleted branches, or changed remotes
+- Git status: Manual recording checklist and state documentation updates are unstaged/untracked; Codex has not staged, committed, pushed, tagged, rewritten history, deleted branches, or changed remotes
 - Main blocker: none. The project database maps to host port `5433`.
+
+## Manual Demo Recording Package Readiness - 2026-06-19
+
+### Phase Objective
+
+Prepare the final manual portfolio demo recording package for a 2-4 minute production-preview video without recording the video, changing app code, adding CI, using paid APIs, using real data, or adding real external integrations.
+
+### Summary
+
+- Inspected repository state, `AGENTS.md`, `README.md`, package scripts, `docs/STATE.md`, `docs/RUNBOOK.md`, `docs/screenshots-checklist.md`, `docs/demo-video-script.md`, `docs/assets/screenshots/README.md`, screenshot files, seeded-data behavior, implemented dashboard routes, Prisma schema IDs, and E2E flow coverage before editing.
+- Reviewed `docs/demo-video-script.md` against the current routes, seeded data, screenshot set, and demo flow. No change was needed; the script still matches the implemented app.
+- Added `docs/demo-recording-checklist.md` with exact PowerShell baseline restore commands, the exact production-preview command for `127.0.0.1:3000`, the browser route sequence, seeded/demo/mock data reminders, screen-recording safety reminders, the no-real-Stripe/API-integration talking point, and the suggested final video filename.
+- Verified `docs/assets/screenshots/README.md` still matches the screenshot files currently present in `docs/assets/screenshots/`; no screenshot documentation change was needed.
+- Restored the local deterministic seeded baseline before validation, ran the required gates, ran the optional Chromium E2E flow because this phase depends on demo-route readiness, and restored the seeded baseline again after E2E/import checks mutated local demo data.
+- No app code, schema, migration, dependency, screenshot asset, demo video, GitHub Actions/CI, external integration, paid API, real data, Stripe CLI command, commit, push, tag, staging, history rewrite, branch deletion, or remote change was performed.
+
+### Files Changed
+
+- `docs/demo-recording-checklist.md`: added the manual production-preview recording checklist.
+- `docs/STATE.md`: recorded this manual recording package phase, validation, skipped checks, manual follow-up, current git status, and next phase.
+
+Reviewed with no changes:
+
+- `docs/demo-video-script.md`
+- `docs/assets/screenshots/README.md`
+
+### Affected Layers
+
+- Documentation and local validation only. No application runtime, database schema, route handler, UI component, test, fixture, dependency, CI, or integration code changed.
+
+### Validation
+
+| Gate | Command | Status | Exact result |
+|---|---|---|---|
+| Docker database | `docker compose up -d db` | pass | Container `ecommerce_ops_refund_dashboard_postgres` was running |
+| Prisma generate | `pnpm db:generate` | pass | Generated Prisma Client 7.8.0 to `src/generated/prisma` |
+| Deterministic seed before validation | `pnpm db:seed` | pass | Seeded 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events |
+| Lint | `pnpm lint` | pass | `eslint .` completed with no reported errors |
+| Typecheck | `pnpm typecheck` | pass | `tsc --noEmit` completed with no errors |
+| Tests | `pnpm test` | pass | 11 test files and 47 tests passed |
+| Build | `pnpm build` | pass | Next.js 16.2.9 production build compiled successfully and listed `/`, `/orders`, `/orders/[orderId]`, `/refunds`, `/customers/[customerId]`, `/imports`, `/alerts`, `/api/imports/orders`, `/api/reports/weekly-ops`, `/api/alerts/recalculate`, and `/api/webhooks/stripe` |
+| Optional E2E | `pnpm e2e -- --project=chromium` | pass | 2 Playwright Chromium tests passed |
+| Final baseline restore | `pnpm db:seed` | pass | Restored deterministic seed counts after E2E/import workflow |
+| Whitespace check | `git diff --check` | pass | Exit code 0; Git warned that `docs/STATE.md` LF line endings will be replaced by CRLF the next time Git touches the file |
+
+### Skipped Checks And Reasons
+
+- No required validation command was skipped.
+- Manual narrated video recording was not performed because this phase explicitly prepares the package for the user to record manually.
+- Video editing/export QA was not performed because no video file was created in this phase.
+- Stripe CLI/manual test webhooks were not run because this phase did not require them and explicit approval for Stripe test CLI use was not provided.
+
+### Manual Follow-Up Required
+
+- The user must record and edit the final 2-4 minute portfolio video manually.
+- Use `docs/demo-video-script.md` for narration and `docs/demo-recording-checklist.md` for production-preview setup, route order, safety checks, and filename guidance.
+- Start from the deterministic baseline with `docker compose up -d db`, `pnpm db:generate`, and `pnpm db:seed`.
+- Build and run production preview with `pnpm build` and `pnpm exec next start -p 3000 -H 127.0.0.1`.
+- Open `http://127.0.0.1:3000` and record only seeded/demo/mock data. Do not show `.env` files, terminals with secrets, private browser tabs, real accounts, or real provider consoles.
+
+### Current Git Status
+
+Expected close-of-phase `git status --short`:
+
+```text
+ M docs/STATE.md
+?? docs/demo-recording-checklist.md
+```
+
+### Remaining Risks And Limitations
+
+- The final video still needs a human recording and editing pass.
+- Live CSV import during recording mutates the local demo database; rerun `pnpm db:seed` before retakes or final manual verification.
+- This remains a local portfolio/demo app with no auth, no production deployment, no live provider sync, and no real commerce/payment data.
+
+### Suggested Next Phase
+
+Record and edit `ecommerce-ops-refund-dashboard-production-preview-demo.mp4` from production preview using `docs/demo-video-script.md` and `docs/demo-recording-checklist.md`. After the video is approved, do a final repository review and prepare a commit/PR only if explicitly requested.
 
 ## Final Production-Preview Screenshots And Demo Readiness - 2026-06-19
 
