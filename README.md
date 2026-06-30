@@ -1,12 +1,89 @@
-# E-commerce Ops Refund Dashboard
+# E-commerce Operations & Refund Dashboard
 
-Portfolio-grade internal operations dashboard for a small e-commerce store. The app uses a local PostgreSQL database, Prisma, deterministic fake seed data, and mock-only provider records to demonstrate order, payment, refund, dispute, and fulfillment operations without using real commerce or payment data.
+## 60-second client read
 
-## What It Solves
+This is a client-style portfolio demo for a small e-commerce operations dashboard: orders, revenue, refunds, disputes, fulfillment status, alerts, CSV import/export, and Stripe-style test webhook handling in one local admin interface.
 
-Small e-commerce teams need a quick way to understand revenue, refund exposure, fulfillment backlog, payment failures, and order-level context without stitching together exports from store, payment, and support tools. This project demonstrates that workflow with synthetic data only.
+**Best-fit client problem:** a store owner or operations team tracks orders, refunds, disputes, failed payments, and fulfillment issues across disconnected exports and dashboards, making exceptions easy to miss.
 
-## Current Implemented Scope
+**Business value demonstrated:** clearer weekly operations review, faster refund/dispute visibility, searchable order context, delayed-fulfillment alerts, and exportable reports for manual review or team handoff.
+
+**Technical proof:** Next.js, TypeScript, PostgreSQL, Prisma, seeded synthetic data, dashboard KPIs, order/detail pages, refund/dispute pages, CSV import/export, mock/test-only Stripe-style webhooks, Vitest, Playwright, and GitHub Actions.
+
+**Demo safety:** all customer, order, payment, refund, and dispute data is synthetic. The project does not use real Stripe, Shopify, WooCommerce, or customer data.
+
+## What a real client version would connect
+
+- Shopify, WooCommerce, Stripe, or CSV exports from the client's existing tools
+- Client-specific alert rules for delayed fulfillment, refund thresholds, failed payments, or repeated disputes
+- Role-based access if used by a team
+- Scheduled weekly reports or dashboard snapshots
+- Deployment to a client-owned Vercel, Supabase, Render, Railway, or similar account
+
+## Screenshots
+
+All screenshots below were captured from the local app using seeded synthetic demo data only.
+
+| KPI overview | Orders table |
+| --- | --- |
+| ![KPI overview showing gross revenue, order count, refund amount, refund rate, average order value, and unfulfilled orders](docs/assets/screenshots/dashboard-kpi-cards.png) | ![Orders table filtered to a failed-payment demo order with search, status, fulfillment, payment, source, and action columns](docs/assets/screenshots/orders-table-filters.png) |
+
+| Order detail | Refunds and disputes |
+| --- | --- |
+| ![Order detail page showing order summary, customer summary, payment and refund context, line items, fulfillment events, and mock provider records](docs/assets/screenshots/order-detail-page.png) | ![Refund operations page showing completed refunds, refund count, disputed amount, open disputes, and refund/dispute tables](docs/assets/screenshots/refunds-disputes-page.png) |
+
+| Alert list | CSV workflow |
+| --- | --- |
+| ![Operational alerts page showing delayed fulfillment alerts, filters, and recalculation status](docs/assets/screenshots/alerts-list.png) | ![CSV import workflow showing a completed synthetic order import with batch summary and recent import batches](docs/assets/screenshots/csv-import-success-state.png) |
+
+## Demo video
+
+The repository includes a repeatable Playwright capture workflow for a silent business demo:
+
+```powershell
+docker compose up -d db
+pnpm db:generate
+pnpm db:seed
+pnpm media:demo
+```
+
+The capture opens the dashboard, reviews KPI summary, filters the orders queue for an exception, opens an order detail page, reviews refund/dispute context, imports a synthetic CSV, recalculates alerts, downloads the weekly CSV export, and ends on the mock/test-only payment safety note. It writes the video to `docs/demo/ecommerce-ops-refund-dashboard-demo.webm`.
+
+The video file is linked here only after it exists in the repository; until then, use `pnpm media:demo` to generate it locally.
+
+## How this adapts to Shopify, WooCommerce, or Stripe-only businesses
+
+- **Shopify-based stores:** sync orders, customers, fulfillment states, refunds, and returns from Shopify, then keep the dashboard focused on delayed fulfillment, refund exposure, and weekly operations review.
+- **WooCommerce-based stores:** pull order, customer, refund, and payment-gateway metadata from WooCommerce while preserving the same queue, alert, and export workflows.
+- **Stripe-only or payment-provider-led workflows:** treat Stripe-style events as the source for payments, failed charges, refunds, and disputes, then enrich them with order metadata from CSV or a lightweight internal source.
+- **CSV-export-heavy teams:** keep CSV import/export as the operating bridge, with validation, exception alerts, and weekly reports layered over the files the team already uses.
+
+## Demo safety and payment boundaries
+
+- Webhooks and payment flows are mock/test-only in this portfolio demo.
+- No real payment credentials are required for local setup, screenshots, or automated tests.
+- The app does not make live Stripe API calls; the Stripe SDK is used for local webhook signature verification only.
+- Seeded customer, order, payment, refund, dispute, alert, import, and webhook records are deterministic synthetic data.
+- Do not use real Stripe, Shopify, WooCommerce, customer, order, payment, refund, or dispute data with this repository.
+- `.env.local` stays untracked. `.env.example` contains safe placeholders only.
+
+## Data model overview
+
+| Entity | What it represents in the demo |
+| --- | --- |
+| `Customer` | Synthetic customer identity, location, lifetime value, notes, orders, payments, and alerts. |
+| `Order` | Store order with source, status, fulfillment status, monetary totals, customer link, items, payments, refunds, disputes, alerts, and optional import batch. |
+| `OrderItem` | Line items on an order, including SKU, product type, quantity, amount, and fulfillment quantity. |
+| `Payment` | Mock provider payment records tied to customers and orders, including status, amount, failure details, refunds, disputes, webhook events, and alerts. |
+| `Refund` | Mock refund records tied to orders and optional payments, with provider IDs, status, amount, reason, and webhook event links. |
+| `Dispute` | Mock dispute records tied to orders and optional payments, with provider IDs, status, amount, reason, and webhook event links. |
+| `FulfillmentEvent` | Fulfillment timeline records for orders, including status, date, carrier, tracking number, and notes. |
+| `AlertRule` / `Alert` | Demo alert configuration and generated operational exceptions for delayed fulfillment, high refund amount, and repeated failed payments. |
+| `CustomerNote` | Local-only operations notes for synthetic customers and optional related orders. |
+| `ImportBatch` | CSV import batches with source, status, file name, row counts, success/failure counts, notes, and imported orders. |
+| `WebhookEvent` | Stored mock/test webhook payloads with provider event ID, processing status, raw JSON payload, and optional links to payments, refunds, disputes, or import batches. |
+
+## Current implemented scope
 
 - Prisma data model for customers, orders, order items, payments, refunds, disputes, fulfillment events, alert rules, alerts, customer notes, import batches, and webhook events.
 - Deterministic fake seed data for a credible operations dataset.
@@ -23,23 +100,11 @@ Small e-commerce teams need a quick way to understand revenue, refund exposure, 
 - Mock/test-only Stripe webhook endpoint at `POST /api/webhooks/stripe` with local signature verification, idempotent event storage, and safe mapping for refund, failed-payment, and dispute test events.
 - Automated Vitest coverage for domain calculations, CSV validation/escaping, alert evaluation, order helpers, and import/alert service flows.
 - Playwright Chromium coverage for the main dashboard, orders flow, import workflow, alert recalculation, and weekly CSV download.
-- Portfolio screenshot checklist and demo video script for a business-value walkthrough.
-- Local-validation-based GitHub Actions CI for lint, typecheck, Vitest, build, and Playwright Chromium against seeded PostgreSQL.
+- GitHub Actions CI for lint, typecheck, Vitest, build, and Playwright Chromium against seeded PostgreSQL.
 
-Phase 4 intentionally does not implement real production Stripe API calls, real Shopify/WooCommerce adapters, auth, production deployment, or live payment data workflows.
+This repository is not production-ready. It intentionally does not implement real production Stripe API calls, real Shopify/WooCommerce adapters, auth, production deployment, or live payment data workflows.
 
-## Data And Integration Safety
-
-- All visible data is synthetic demo data.
-- Seeded database data is deterministic and fake.
-- Do not use real Stripe, Shopify, WooCommerce, customer, order, payment, or refund data.
-- External integrations default to mock/no-paid-API mode.
-- Stripe test webhooks require explicit approval before use.
-- The app does not make live Stripe API calls; the Stripe SDK is used only for local webhook signature verification.
-- `.env.local` stays untracked. `.env.example` contains safe placeholders only.
-- No paid APIs are required for local development or validation.
-
-## Tech Stack
+## Tech stack
 
 - Next.js App Router with TypeScript
 - React 19
@@ -51,7 +116,7 @@ Phase 4 intentionally does not implement real production Stripe API calls, real 
 - Stripe SDK for local webhook signature verification only
 - Prisma 7 with local PostgreSQL through Docker Compose
 - Vitest, Testing Library, and jsdom for unit tests
-- Playwright Chromium for browser/E2E tests
+- Playwright Chromium for browser/E2E tests and media capture
 - pnpm as the only project package manager
 
 ## Setup
@@ -67,7 +132,7 @@ Copy-Item .env.example .env.local
 
 Keep `.env.local` local-only and do not commit real secrets.
 
-## Database, Migrations, And Seed Data
+## Database, migrations, and seed data
 
 The local database service is named `db` and maps container port `5432` to host port `5433`.
 
@@ -84,7 +149,7 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-The Phase 1 seed uses fixed reference date `2026-06-15T12:00:00.000Z` and a fixed pseudo-random seed. It creates 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events.
+The seed uses fixed reference date `2026-06-15T12:00:00.000Z` and a fixed pseudo-random seed. It creates 85 customers, 180 orders, 420 order items, 174 payments, 37 refunds, 7 disputes, 244 fulfillment events, 3 alert rules, 33 alerts, 30 customer notes, 3 import batches, and 219 webhook events.
 
 Useful database scripts:
 
@@ -96,7 +161,7 @@ pnpm db:studio
 pnpm db:reset
 ```
 
-## Run The Dashboard Locally
+## Run the dashboard locally
 
 Start the database and seed it first, then run:
 
@@ -112,7 +177,9 @@ Open:
 - `http://localhost:3000/imports`
 - `http://localhost:3000/alerts`
 
-## KPI Formulas
+## Business workflows
+
+### KPI formulas
 
 - Gross revenue: paid non-canceled order total.
 - Order count: paid non-canceled orders.
@@ -124,15 +191,23 @@ Open:
 - Failed payment count: failed payments.
 - Disputed amount: active dispute exposure; closed, won, and lost disputes are excluded.
 
-## Orders Workflow
+### Orders, refunds, customers, and alerts
 
 The `/orders` route demonstrates an internal operations queue for reviewing order health across customer identity, source, fulfillment state, payment status, refund exposure, and order value. The detail route shows the context an operations user would need before escalating a delayed fulfillment, payment failure, refund, or dispute.
-
-## Phase 3 Operational Workflows
 
 The `/refunds` route shows completed refund amount, refund count, disputed amount, open disputes, a refunds table, and a disputes table using seeded local database records only.
 
 The `/customers/[customerId]` route shows a synthetic customer profile, lifetime revenue/refund metrics, customer orders, refunds, disputes, seeded notes, and a local-only note form. Notes are validated with Zod and saved to the local database as `Ops demo agent`.
+
+The `/alerts` route lists generated alerts and can recalculate them. Seeded alert rules drive thresholds:
+
+- Delayed fulfillment: physical unfulfilled orders older than 72 hours.
+- High refund amount: succeeded refunds at or above 10,000 cents.
+- Repeated failed payments: customers with at least 2 failed mock payments.
+
+Alert generation is idempotent by matching the rule and related order, refund, or customer before creating a new alert.
+
+### CSV import and weekly export
 
 The `/imports` route uploads order CSV files to `POST /api/imports/orders`. Required columns:
 
@@ -157,14 +232,6 @@ Invoke-WebRequest "http://localhost:3000/api/reports/weekly-ops?weekStart=2026-0
 
 The export returns `text/csv` with rows for orders, refunds, disputes, fulfillment delays, and open alerts. CSV fields are escaped for commas, quotes, and newlines.
 
-The `/alerts` route lists generated alerts and can recalculate them. Seeded alert rules drive thresholds:
-
-- Delayed fulfillment: physical unfulfilled orders older than 72 hours.
-- High refund amount: succeeded refunds at or above 10,000 cents.
-- Repeated failed payments: customers with at least 2 failed mock payments.
-
-Alert generation is idempotent by matching the rule and related order, refund, or customer before creating a new alert.
-
 To run the import/export flow locally:
 
 ```powershell
@@ -176,11 +243,9 @@ pnpm dev
 
 Open `http://localhost:3000/imports`, upload `tests/fixtures/orders-import-sample.csv`, confirm the imported order appears in `/orders`, open `/alerts` and recalculate alerts, then use the dashboard weekly export button.
 
-## Mock Integrations
+## Mock integrations and Stripe test webhooks
 
 Mock Stripe-style event fixtures live under `src/lib/test-data/stripe-events/` and contain fake `evt_mock_`, `pi_mock_`, `re_mock_`, and `dp_mock_` identifiers only. The mock store adapter under `src/lib/store-adapters/` defines the contract future Shopify, WooCommerce, Stripe-only, or CSV adapters can implement without adding real network calls or credentials.
-
-## Phase 4 Stripe Test Webhooks
 
 `POST /api/webhooks/stripe` accepts signed Stripe-format webhook payloads in mock/test mode only. The route reads the raw request body, requires `STRIPE_WEBHOOK_SECRET`, verifies the `stripe-signature` header locally with the Stripe SDK, and never calls Stripe APIs.
 
@@ -204,13 +269,13 @@ stripe trigger payment_intent.payment_failed
 stripe trigger charge.dispute.created
 ```
 
-## Build
+## Build and production preview
+
+Build:
 
 ```powershell
 pnpm build
 ```
-
-## Run Production Preview
 
 Build first, then start the Next.js production server:
 
@@ -223,7 +288,7 @@ Open `http://127.0.0.1:3000`. Stop the server with `Ctrl+C`.
 
 Use production preview for portfolio screenshots so the Next.js dev indicator is not visible.
 
-## Tests And Validation
+## Tests, validation, and CI
 
 Run individual gates:
 
@@ -243,16 +308,13 @@ pnpm validate
 
 `pnpm validate` runs lint, typecheck, unit tests, and build. E2E is separate because Playwright starts or reuses a local server and controls Chromium.
 
-## Manual QA And Screenshots
+GitHub Actions in `.github/workflows/ci.yml` runs on push and pull request. It starts PostgreSQL, installs dependencies, generates the Prisma client, applies migrations, seeds demo data, then runs lint, typecheck, Vitest, build, installs Playwright Chromium, and runs E2E.
+
+## Manual QA and media docs
 
 - Manual QA checklist: `docs/RUNBOOK.md`
+- Screenshot checklist: `docs/screenshots-checklist.md`
 - Screenshot naming convention: `docs/assets/screenshots/README.md`
+- Demo video script: `docs/demo-video-script.md`
+- Demo recording checklist: `docs/demo-recording-checklist.md`
 - Phase history and validation record: `docs/STATE.md`
-
-## How this would be adapted for Shopify, WooCommerce, or Stripe-only businesses
-
-- Shopify: replace the mock store adapter with Shopify Admin API order, fulfillment, customer, return, and refund sync. Stripe-style payment events could remain an optional enrichment layer when the store uses Stripe-based payments.
-- WooCommerce: replace the mock adapter with WooCommerce REST API order, refund, customer, and payment-gateway metadata sync while keeping the same dashboard, alert, and export shapes.
-- Stripe-only: treat Stripe as the payment, refund, dispute, and webhook source of truth, then import order metadata from CSV or an internal system when Stripe metadata is not enough for operations context.
-
-This repository is not production-ready. All variants should keep the same portfolio safety rule here: synthetic data by default, mock adapters first, and no real production customer or payment records.
